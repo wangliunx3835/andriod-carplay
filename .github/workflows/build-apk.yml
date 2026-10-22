@@ -1,4 +1,4 @@
-name: Build AADisplay v2 APK
+name: Build AADisplay v3 APK
 on:
   push:
     branches: [main]
@@ -18,6 +18,9 @@ jobs:
       - name: Apply and verify exact v2 code
         working-directory: source
         run: python3 ../apply_v2.py
+      - name: Apply v3 iAP2 fix
+        working-directory: source
+        run: python3 ../apply_v3.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -43,6 +46,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v2-APK
+          name: AADisplay-CarPlay-v3-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
