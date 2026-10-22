@@ -32,10 +32,19 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Check preinstalled Android SDK
-        run: sdkmanager --version
+      - name: Install Android command line tools
+        run: |
+          mkdir -p "$RUNNER_TEMP/android-sdk/cmdline-tools"
+          curl -fL --retry 3 https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o "$RUNNER_TEMP/cmdline.zip"
+          unzip -q "$RUNNER_TEMP/cmdline.zip" -d "$RUNNER_TEMP/android-sdk/cmdline-tools"
+          mv "$RUNNER_TEMP/android-sdk/cmdline-tools/cmdline-tools" "$RUNNER_TEMP/android-sdk/cmdline-tools/latest"
+          echo "ANDROID_HOME=$RUNNER_TEMP/android-sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$RUNNER_TEMP/android-sdk" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/android-sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
       - name: Install Android SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Build debug APK
         working-directory: source
         run: |
