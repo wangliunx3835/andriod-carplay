@@ -11,14 +11,66 @@ jobs:
     steps:
       - name: Check out build configuration
         uses: actions/checkout@v4
-      - name: Verify and unpack complete v2 source ZIP
+      - name: Fetch pinned AADisplay source
         run: |
-          test -f AADisplay-CarPlay-network-fix-v2-source.zip
-          echo "4a2edf69db969ba08823d90084059c93b6fa1585067f9ce0bad37f83583092db  AADisplay-CarPlay-network-fix-v2-source.zip" | sha256sum -c -
-          mkdir source
-          unzip -q AADisplay-CarPlay-network-fix-v2-source.zip -d source
-          test -f source/gradlew
-          test -f source/settings.gradle.kts
+          git clone --depth 1 --branch AADisplay-Split-Lite-Carplay https://github.com/lagXkjy/AADisplay.git source
+          git -C source fetch --depth 1 origin 494dcc4909e8765e8798be4e7b8031fefd90a4eb
+          git -C source checkout --detach 494dcc4909e8765e8798be4e7b8031fefd90a4eb
+      - name: Apply exact v2 code changes and verify SHA256
+        working-directory: source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p = Path("aa-display/src/main/java/io/github/nitsuya/aa/display/carplay/CarPlaySourceSession.kt")
+          s = p.read_text()
+          old = '''            val addr = try {
+              InetAddress.getByName(host)
+            } catch (e: Throwable) {
+              Log.e(CarPlayConsts.TAG, "StartSession resolve failed $host", e)
+              return@Thread
+            }
+            // HU-stub / lab loopback: plain sockets, no accessory Network bind.
+            val loopback = addr.isLoopbackAddress'''
+          new = '''            // Do not resolve an unscoped fe80:: address before the Wi-Fi handoff
+            // has settled. Android rejects link-local TCP without an interface scope.
+            // Re-evaluate the DHCP gateway on each attempt because the initial
+            // StartSession can arrive before LinkProperties become available.
+            val linkLocal = host.startsWith("fe80:", ignoreCase = true)
+            // HU-stub / lab loopback: plain sockets, no accessory Network bind.
+            val loopback = !linkLocal && try {
+                InetAddress.getByName(host).isLoopbackAddress
+            } catch (_: Throwable) { false }'''
+          old = old.replace('              ', '                ')
+          if old not in s: raise SystemExit("v2 patch block 1 not found")
+          s = s.replace(old,new,1)
+          marker = '                    Log.i(\n                        CarPlayConsts.TAG,\n                        "AirPlay source dial from StartSession $host:$port " +'
+          inject = '''                    val dialHost = if (linkLocal && !wired) {
+                        wifiHandoff?.accessoryIpv4Hint(start.ssid ?: lastWifiSsid)
+                    } else null
+                    val effectiveHost = dialHost ?: host
+                    val addr = InetAddress.getByName(effectiveHost)
+                    if (linkLocal && dialHost == null) {
+                        throw IllegalStateException(
+                            "StartSession fe80 address lacks interface scope; " +
+                                "waiting for accessory IPv4 DHCP gateway",
+                        )
+                    }
+                    if (dialHost != null) {
+                        Log.i(CarPlayConsts.TAG,
+                            "AirPlay link-local fallback via DHCP gateway $dialHost")
+                    }
+'''
+          if marker not in s: raise SystemExit("v2 patch block 2 not found")
+          s=s.replace(marker,inject+marker.replace('$host:$port','$effectiveHost:$port'),1)
+          marker='                    // Probe reachability before committing the AirPlay handshake thread.'
+          s=s.replace(marker,'                    Log.i(CarPlayConsts.TAG, "AirPlay TCP probe target=$addr:$port networkBound=${CarPlayAccessoryNet.hasNetwork()} attempt=$attempt")\n'+marker,1)
+          p.write_text(s)
+          digest=hashlib.sha256(p.read_bytes()).hexdigest()
+          expected='fe84b57bd87214d50aeb724b36aaf7eee0536c42ad62460938091c2d3240bbcc'
+          print('Patched source SHA256:',digest)
+          if digest != expected: raise SystemExit('v2 source checksum mismatch; refusing mislabeled build')
+          PY
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -44,6 +96,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v2-exact-APK
+          name: AADisplay-CarPlay-v2-verified-code-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
