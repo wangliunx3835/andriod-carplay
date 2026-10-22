@@ -5,7 +5,7 @@ needle='''        CarPlayStatusUi.bind(this, baseBinding)'''
 assert s.count(needle)==1
 s=s.replace(needle,'''        // v6: Android 16 local-network permission is runtime gated.
         // Ask while the status Activity is visible; background FGS cannot show a prompt.
-        if (android.os.Build.VERSION.SDK_INT >= 37 &&
+        if (android.os.Build.VERSION.SDK_INT >= 36 &&
             checkSelfPermission("android.permission.ACCESS_LOCAL_NETWORK") !=
                 android.content.pm.PackageManager.PERMISSION_GRANTED) {
             android.util.Log.i(CarPlayConsts.TAG, "v6 requesting ACCESS_LOCAL_NETWORK")
