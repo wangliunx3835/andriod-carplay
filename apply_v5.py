@@ -11,15 +11,10 @@ change('''        val host = CarPlayUsbHandoff.pickDialHost(start.ipAddresses)
             ?: start.ipAddresses.firstOrNull()
         val gateway = if (!wired) wifiHandoff?.accessoryIpv4Hint(start.ssid) else null
         val host = advertised ?: gateway''')
-change('''            // Do not resolve an unscoped fe80:: address before the Wi-Fi handoff
-            // has settled. Android rejects link-local TCP without an interface scope.
-            // Re-evaluate the DHCP gateway on each attempt because the initial
-            // StartSession can arrive before LinkProperties become available.
-            val linkLocal = host.startsWith("fe80:", ignoreCase = true)
-            // HU-stub / lab loopback: plain sockets, no accessory Network bind.
-            val loopback = !linkLocal && try {
-                InetAddress.getByName(host).isLoopbackAddress
-            } catch (_: Throwable) { false }''','''            fun scopedAddress(candidate: String): InetAddress {
+start = s.index("        Thread({", s.index("    private fun dialCarPlayControl("))
+a = s.index("            // Do not resolve", start)
+b = s.index("            // Handoff / DHCP", a)
+s = s[:a] + '''            fun scopedAddress(candidate: String): InetAddress {
                 val raw = InetAddress.getByName(candidate)
                 if (raw is java.net.Inet6Address && raw.isLinkLocalAddress && raw.scopeId == 0) {
                     val net = CarPlayAccessoryNet.get()
@@ -33,7 +28,8 @@ change('''            // Do not resolve an unscoped fe80:: address before the Wi
                 }
                 return raw
             }
-            Log.i(CarPlayConsts.TAG, "v5 AirPlay candidates advertised=$advertised gateway=$gateway port=$port")''')
+            Log.i(CarPlayConsts.TAG, "v5 AirPlay candidates advertised=$advertised gateway=$gateway port=$port")
+''' + s[b:]
 change('''                try {
                     if (!loopback) {''','''                try {
                     val candidate = if (attempt <= 6 || gateway.isNullOrBlank() || gateway == advertised)
