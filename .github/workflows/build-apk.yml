@@ -1,4 +1,4 @@
-name: Build AADisplay APK
+name: Build AADisplay v2 APK
 on:
   push:
     branches: [main]
@@ -14,6 +14,8 @@ jobs:
       - name: Fetch AADisplay source
         run: |
           git clone --depth 1 --branch AADisplay-Split-Lite-Carplay https://github.com/lagXkjy/AADisplay.git source
+          git -C source fetch --depth 1 origin 494dcc4909e8765e8798be4e7b8031fefd90a4eb
+          git -C source checkout --detach 494dcc4909e8765e8798be4e7b8031fefd90a4eb
       - name: Apply CarPlay TCP diagnostic patch
         working-directory: source
         run: |
@@ -28,6 +30,10 @@ jobs:
           if insert.strip() not in s:
               p.write_text(s.replace(marker, insert + marker, 1))
           PY
+      - name: Verify v2 source file checksum
+        working-directory: source
+        run: |
+          echo "fe84b57bd87214d50aeb724b36aaf7eee0536c42ad62460938091c2d3240bbcc  aa-display/src/main/java/io/github/nitsuya/aa/display/carplay/CarPlaySourceSession.kt" | sha256sum -c -
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -53,6 +59,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-test-APK
+          name: AADisplay-CarPlay-v2-verified-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
