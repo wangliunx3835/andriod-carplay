@@ -1,4 +1,4 @@
-name: Build AADisplay v2 APK
+name: Build exact v2 source APK
 on:
   push:
     branches: [main]
@@ -11,29 +11,14 @@ jobs:
     steps:
       - name: Check out build configuration
         uses: actions/checkout@v4
-      - name: Fetch AADisplay source
+      - name: Verify and unpack complete v2 source ZIP
         run: |
-          git clone --depth 1 --branch AADisplay-Split-Lite-Carplay https://github.com/lagXkjy/AADisplay.git source
-          git -C source fetch --depth 1 origin 494dcc4909e8765e8798be4e7b8031fefd90a4eb
-          git -C source checkout --detach 494dcc4909e8765e8798be4e7b8031fefd90a4eb
-      - name: Apply CarPlay TCP diagnostic patch
-        working-directory: source
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("aa-display/src/main/java/io/github/nitsuya/aa/display/carplay/CarPlaySourceSession.kt")
-          s = p.read_text()
-          marker = '                    // Probe reachability before committing the AirPlay handshake thread.'
-          insert = '                    Log.i(CarPlayConsts.TAG, "AirPlay TCP probe target=$addr:$port networkBound=${CarPlayAccessoryNet.hasNetwork()} attempt=$attempt")\n'
-          if marker not in s:
-              raise SystemExit("Patch location not found; upstream changed")
-          if insert.strip() not in s:
-              p.write_text(s.replace(marker, insert + marker, 1))
-          PY
-      - name: Verify v2 source file checksum
-        working-directory: source
-        run: |
-          echo "fe84b57bd87214d50aeb724b36aaf7eee0536c42ad62460938091c2d3240bbcc  aa-display/src/main/java/io/github/nitsuya/aa/display/carplay/CarPlaySourceSession.kt" | sha256sum -c -
+          test -f AADisplay-CarPlay-network-fix-v2-source.zip
+          echo "4a2edf69db969ba08823d90084059c93b6fa1585067f9ce0bad37f83583092db  AADisplay-CarPlay-network-fix-v2-source.zip" | sha256sum -c -
+          mkdir source
+          unzip -q AADisplay-CarPlay-network-fix-v2-source.zip -d source
+          test -f source/gradlew
+          test -f source/settings.gradle.kts
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -59,6 +44,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v2-verified-APK
+          name: AADisplay-CarPlay-v2-exact-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
