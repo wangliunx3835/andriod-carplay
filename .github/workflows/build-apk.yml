@@ -1,4 +1,4 @@
-name: Build AADisplay v6 APK
+name: Build AADisplay v7 APK
 on:
   push:
     branches: [main]
@@ -30,6 +30,9 @@ jobs:
       - name: Apply v6 permission and AirPlay route diagnostics
         working-directory: source
         run: python3 ../apply_v6.py
+      - name: Apply v7 preserve streaming on Bluetooth loss
+        working-directory: source
+        run: python3 ../apply_v7.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -55,6 +58,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v6-APK
+          name: AADisplay-CarPlay-v7-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
