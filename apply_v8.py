@@ -49,7 +49,9 @@ rep('''    private fun onAccessoryWifiBound(staMac: String?) {
         v8AcquireRadioLocks()
         val bj = bonjour ?: return''')
 rep('''        if (!running.compareAndSet(true, false)) return
+        dialGeneration.incrementAndGet()
         cancelPhoneAudioRelease()''','''        if (!running.compareAndSet(true, false)) return
+        dialGeneration.incrementAndGet()
         v8ReleaseRadioLocks()
         cancelPhoneAudioRelease()''')
 p.write_text(s)
