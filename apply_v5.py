@@ -11,14 +11,15 @@ change('''        val host = CarPlayUsbHandoff.pickDialHost(start.ipAddresses)
             ?: start.ipAddresses.firstOrNull()
         val gateway = if (!wired) wifiHandoff?.accessoryIpv4Hint(start.ssid) else null
         val host = advertised ?: gateway''')
-change('''            val addr = try {
-                InetAddress.getByName(host)
-            } catch (e: Throwable) {
-                Log.e(CarPlayConsts.TAG, "StartSession resolve failed $host", e)
-                return@Thread
-            }
+change('''            // Do not resolve an unscoped fe80:: address before the Wi-Fi handoff
+            // has settled. Android rejects link-local TCP without an interface scope.
+            // Re-evaluate the DHCP gateway on each attempt because the initial
+            // StartSession can arrive before LinkProperties become available.
+            val linkLocal = host.startsWith("fe80:", ignoreCase = true)
             // HU-stub / lab loopback: plain sockets, no accessory Network bind.
-            val loopback = addr.isLoopbackAddress''','''            fun scopedAddress(candidate: String): InetAddress {
+            val loopback = !linkLocal && try {
+                InetAddress.getByName(host).isLoopbackAddress
+            } catch (_: Throwable) { false }''','''            fun scopedAddress(candidate: String): InetAddress {
                 val raw = InetAddress.getByName(candidate)
                 if (raw is java.net.Inet6Address && raw.isLinkLocalAddress && raw.scopeId == 0) {
                     val net = CarPlayAccessoryNet.get()
@@ -39,9 +40,24 @@ change('''                try {
                         host else gateway
                     val preliminaryLoopback = candidate == "127.0.0.1" || candidate == "::1"
                     if (!preliminaryLoopback) {''')
-change('''                    Log.i(
+change('''                    val dialHost = if (linkLocal && !wired) {
+                        wifiHandoff?.accessoryIpv4Hint(start.ssid ?: lastWifiSsid)
+                    } else null
+                    val effectiveHost = dialHost ?: host
+                    val addr = InetAddress.getByName(effectiveHost)
+                    if (linkLocal && dialHost == null) {
+                        throw IllegalStateException(
+                            "StartSession fe80 address lacks interface scope; " +
+                                "waiting for accessory IPv4 DHCP gateway",
+                        )
+                    }
+                    if (dialHost != null) {
+                        Log.i(CarPlayConsts.TAG,
+                            "AirPlay link-local fallback via DHCP gateway $dialHost")
+                    }
+                    Log.i(
                         CarPlayConsts.TAG,
-                        "AirPlay source dial from StartSession $host:$port " +''','''                    val addr = scopedAddress(candidate)
+                        "AirPlay source dial from StartSession $effectiveHost:$port " +''','''                    val addr = scopedAddress(candidate)
                     val loopback = addr.isLoopbackAddress
                     Log.i(CarPlayConsts.TAG, "v5 AirPlay endpoint=$candidate resolved=$addr network=${CarPlayAccessoryNet.get()} attempt=$attempt")
                     Log.i(
