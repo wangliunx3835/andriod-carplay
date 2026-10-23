@@ -1,4 +1,4 @@
-name: Build AADisplay v11 APK
+name: Build AADisplay v12 APK
 on:
   push:
     branches: [main]
@@ -45,6 +45,9 @@ jobs:
       - name: Apply v11 IPv4 and MIB3 session fixes
         working-directory: source
         run: python3 ../apply_v11.py
+      - name: Apply v12 immediate video TCP dial
+        working-directory: source
+        run: python3 ../apply_v12.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -75,16 +78,16 @@ jobs:
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v11-debug.apk
-          tag="v11-ipv4-mib3"
+          cp "$apk" AADisplay-CarPlay-v12-debug.apk
+          tag="v12-video-tcp"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v11-debug.apk --clobber
+            gh release upload "$tag" AADisplay-CarPlay-v12-debug.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v11-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v11 IPv4 MIB3 Fix" --notes "v11 IPv4 endpoint and MIB3 SETUP fix build from pinned upstream." --latest
+            gh release create "$tag" AADisplay-CarPlay-v12-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v12 Video TCP Fix" --notes "v12 immediate video TCP dial and bounded timeout build from pinned upstream." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v11-APK
+          name: AADisplay-CarPlay-v12-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
