@@ -1,4 +1,4 @@
-name: Build AADisplay v15 APK
+name: Build AADisplay v16 APK
 on:
   push:
     branches: [main]
@@ -57,7 +57,7 @@ jobs:
       - name: Apply v15 Wi-Fi and CPU locks
         working-directory: source
         run: python3 ../apply_v15.py
-      - uses: actions/setup-java@v4
+      - name: Apply v16 virtual-display IME fix\n        working-directory: source\n        run: python3 ../apply_v16.py\n      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
@@ -87,16 +87,16 @@ jobs:
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v15-debug.apk
-          tag="v15-lockscreen-stability"
+          cp "$apk" AADisplay-CarPlay-v16-debug.apk
+          tag="v16-ime-fix"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v15-debug.apk --clobber
+            gh release upload "$tag" AADisplay-CarPlay-v16-debug.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v15-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v15 Lockscreen Stability" --notes "v15 Wi-Fi and CPU locks, StartSession priority; retains v12-v14 improvements." --latest
+            gh release create "$tag" AADisplay-CarPlay-v16-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v16 IME Fix" --notes "v16 IME-only changes: activate upstream virtual-display keyboard handling and touch injection diagnostics. Preserves all v15 wireless and media behavior." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v15-APK
+          name: AADisplay-CarPlay-v16-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
