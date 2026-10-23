@@ -1,4 +1,4 @@
-name: Build AADisplay v20 APK
+name: Build AADisplay v21 APK
 on:
   push:
     branches: [main]
@@ -72,7 +72,10 @@ jobs:
       - name: Apply v20 IME focus diagnostics and policy repair
         working-directory: source
         run: python3 ../apply_v20.py
-      - name: Apply v21 native Android IME routing\n        working-directory: source\n        run: python3 ../apply_v21.py\n      - uses: actions/setup-java@v4
+      - name: Apply v21 native Android IME routing
+        working-directory: source
+        run: python3 ../apply_v21.py
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
