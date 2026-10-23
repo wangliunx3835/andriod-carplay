@@ -31,7 +31,7 @@ b='''        if (rtsp?.isStreaming() == true) {
                 "${appContext.getSystemService(android.os.PowerManager::class.java)?.isInteractive} " +
                 "accessoryNetwork=${CarPlayAccessoryNet.get()}")
             if (forceSurfaceRefresh'''
-assert s.count(a)==1,s=s.replace(a,b,1) if False else None
+assert s.count(a)==1
 s=s.replace(a,b,1)
 p.write_text(s)
 p=Path("aa-display/src/main/java/io/github/nitsuya/aa/display/carplay/CarPlayWifiHandoff.kt")
