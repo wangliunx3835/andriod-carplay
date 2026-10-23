@@ -20,7 +20,7 @@ replace_once(
 )
 replace_once(
     '        val host = if (preferGateway) gateway else advertised ?: gateway',
-    '        var host = if (preferGateway) gateway else advertised ?: gateway',
+    '        var host: String = (if (preferGateway) gateway else advertised ?: gateway) ?: ""',
 )
 needle = '''        Thread({
             fun scopedAddress(candidate: String): InetAddress {'''
