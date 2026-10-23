@@ -1,4 +1,4 @@
-name: Build AADisplay v19 APK
+name: Build AADisplay v20 APK
 on:
   push:
     branches: [main]
@@ -66,9 +66,12 @@ jobs:
       - name: Apply v18 IME geometry diagnostics
         working-directory: source
         run: python3 ../apply_v18.py
-      - name: Apply v19 conditional IME layout recovery
+      - name: Apply v20 conditional IME layout recovery
         working-directory: source
         run: python3 ../apply_v19.py
+      - name: Apply v20 IME focus diagnostics and policy repair
+        working-directory: source
+        run: python3 ../apply_v20.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -91,6 +94,13 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew :aa-display:assembleDebug --stacktrace
+      - name: Build optimized release APK (experimental size comparison)
+        working-directory: source
+        run: ./gradlew :aa-display:assembleRelease --stacktrace
+      - name: APK size comparison
+        run: |
+          du -h source/aa-display/build/outputs/apk/debug/*.apk source/aa-display/build/outputs/apk/release/*.apk
+          unzip -l source/aa-display/build/outputs/apk/debug/*.apk | tail -n 2
       - name: Publish APK to GitHub Releases
         if: github.ref == 'refs/heads/main'
         env:
@@ -99,16 +109,19 @@ jobs:
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v19-debug.apk
-          tag="v19-ime-recovery"
+          cp "$apk" AADisplay-CarPlay-v20-debug.apk
+          optimized=$(find source/aa-display/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f -print -quit)
+          test -n "$optimized"
+          cp "$optimized" AADisplay-CarPlay-v20-optimized-experimental.apk
+          tag="v20-ime-focus"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v19-debug.apk --clobber
+            gh release upload "$tag" AADisplay-CarPlay-v20-debug.apk AADisplay-CarPlay-v20-optimized-experimental.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v19-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v19 IME Recovery" --notes "v19 conditional IME zero-frame layout recovery, Android Log diagnostics, and previous v18 IME diagnostics. Preserves CarPlay wireless, RTSP, iAP2, media, and virtual display flags." --latest
+            gh release create "$tag" AADisplay-CarPlay-v20-debug.apk AADisplay-CarPlay-v20-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v20 IME Focus Diagnostics" --notes "v20 periodic IME focus/window/target diagnostics independent of touch; repairs LOCAL policy only if drift detected. Includes debug APK and experimental R8-minified release APK for size comparison. CarPlay transport and VD flags unchanged. Experimental optimized APK may differ in signing and hook behavior." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v19-APK
-          path: source/aa-display/build/outputs/apk/debug/*.apk
+          name: AADisplay-CarPlay-v20-APK
+          path: |\n            source/aa-display/build/outputs/apk/debug/*.apk\n            source/aa-display/build/outputs/apk/release/*.apk
           if-no-files-found: error
