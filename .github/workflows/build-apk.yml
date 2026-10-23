@@ -66,7 +66,7 @@ jobs:
       - name: Apply v18 IME geometry diagnostics
         working-directory: source
         run: python3 ../apply_v18.py
-      - name: Apply v20 conditional IME layout recovery
+      - name: Apply v19 conditional IME layout recovery
         working-directory: source
         run: python3 ../apply_v19.py
       - name: Apply v20 IME focus diagnostics and policy repair
@@ -123,5 +123,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AADisplay-CarPlay-v20-APK
-          path: |\n            source/aa-display/build/outputs/apk/debug/*.apk\n            source/aa-display/build/outputs/apk/release/*.apk
+          path: |
+            source/aa-display/build/outputs/apk/debug/*.apk
+            source/aa-display/build/outputs/apk/release/*.apk
           if-no-files-found: error
