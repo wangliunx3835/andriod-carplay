@@ -1,4 +1,4 @@
-name: Build AADisplay v14 APK
+name: Build AADisplay v15 APK
 on:
   push:
     branches: [main]
@@ -54,6 +54,9 @@ jobs:
       - name: Apply v14 RTSP recovery
         working-directory: source
         run: python3 ../apply_v14.py
+      - name: Apply v15 Wi-Fi and CPU locks
+        working-directory: source
+        run: python3 ../apply_v15.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -84,16 +87,16 @@ jobs:
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v14-debug.apk
-          tag="v14-lock-recovery"
+          cp "$apk" AADisplay-CarPlay-v15-debug.apk
+          tag="v15-lockscreen-stability"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v14-debug.apk --clobber
+            gh release upload "$tag" AADisplay-CarPlay-v15-debug.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v14-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v14 Lock Recovery" --notes "v14 RTSP recovery, v13 dynamic resolution, v12 video TCP baseline." --latest
+            gh release create "$tag" AADisplay-CarPlay-v15-debug.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v15 Lockscreen Stability" --notes "v15 Wi-Fi and CPU locks, StartSession priority; retains v12-v14 improvements." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v14-APK
+          name: AADisplay-CarPlay-v15-APK
           path: source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
