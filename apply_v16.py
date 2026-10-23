@@ -68,4 +68,11 @@ bridge.write_text(source)
 
 # v16 is strictly scoped to IME/touch diagnostics and its lifecycle.
 # The v15 wireless and media patch stack is preserved verbatim.
+gradle = Path("aa-display/build.gradle.kts")
+version = gradle.read_text()
+assert 'versionCode = 3115' in version
+assert 'versionName = "0.3#17.8-v15"' in version
+version = version.replace('versionCode = 3115', 'versionCode = 3116', 1)
+version = version.replace('versionName = "0.3#17.8-v15"', 'versionName = "0.3#17.8-v16"', 1)
+gradle.write_text(version)
 print("v16 IME patch applied")
