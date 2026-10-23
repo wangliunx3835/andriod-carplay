@@ -60,9 +60,9 @@ jobs:
       - name: Apply v16 virtual-display IME fix
         working-directory: source
         run: python3 ../apply_v16.py
-      - name: Apply v18 IME-only recovery and diagnostics
+      - name: Apply v17 IME-only recovery and diagnostics
         working-directory: source
-        run: python3 ../apply_v18.py
+        run: python3 ../apply_v17.py
       - name: Apply v18 IME geometry diagnostics
         working-directory: source
         run: python3 ../apply_v18.py
