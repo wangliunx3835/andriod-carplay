@@ -33,9 +33,9 @@ jobs:
       - name: Apply v7 preserve streaming on Bluetooth loss
         working-directory: source
         run: python3 ../apply_v7.py
-      - name: Apply v9 wireless lock-screen stability fix
+      - name: Apply v8 wireless lock-screen stability fix
         working-directory: source
-        run: python3 ../apply_v9.py
+        run: python3 ../apply_v8.py
       - name: Apply v9 Linux screen SETUP compatibility and diagnostics
         working-directory: source
         run: python3 ../apply_v9.py
