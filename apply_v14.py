@@ -37,7 +37,7 @@ b='''    fun stop() {
         if (!running.compareAndSet(true, false)) return
         mainHandler.removeCallbacks(v14Recovery)
         cancelPhoneAudioRelease()'''
-assert s.count(a)==1
+assert s.count(a)==1, 'stop anchor missing'
 s=s.replace(a,b,1)
 p.write_text(s)
 p=Path("aa-display/build.gradle.kts")
