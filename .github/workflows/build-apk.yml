@@ -1,4 +1,4 @@
-name: Build AADisplay v21 APK
+name: Build AADisplay v22 APK
 on:
   push:
     branches: [main]
@@ -75,6 +75,9 @@ jobs:
       - name: Apply v21 native Android IME routing
         working-directory: source
         run: python3 ../apply_v21.py
+      - name: Apply v22 original author IME display hooks
+        working-directory: source
+        run: python3 ../apply_v22.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -112,20 +115,20 @@ jobs:
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v21-debug.apk
+          cp "$apk" AADisplay-CarPlay-v22-debug.apk
           optimized=$(find source/aa-display/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$optimized"
-          cp "$optimized" AADisplay-CarPlay-v21-optimized-experimental.apk
-          tag="v21-native-ime"
+          cp "$optimized" AADisplay-CarPlay-v22-optimized-experimental.apk
+          tag="v22-original-ime-hooks"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v21-debug.apk AADisplay-CarPlay-v21-optimized-experimental.apk --clobber
+            gh release upload "$tag" AADisplay-CarPlay-v22-debug.apk AADisplay-CarPlay-v22-optimized-experimental.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v21-debug.apk AADisplay-CarPlay-v21-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v21 Native IME" --notes "v21 restores original AADisplay IME controller and disables forced IMMS display routing plus v17-v20 IME recovery. Keeps original per-display LOCAL IME policy and all stable CarPlay transport/VD flags. Debug and experimental optimized APK included; optimized variant may affect reflection/hooks or signing." --latest
+            gh release create "$tag" AADisplay-CarPlay-v22-debug.apk AADisplay-CarPlay-v22-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v22 Original IME Hooks" --notes "v22 restores lagXkjy original VdImeDisplayPin lifecycle (ensureHooked, active and inactive), while retaining native SplitImeController from v21. No floating keyboard, periodic policy reassert, or CarPlay transport/VD flag/density changes. Experimental on HyperOS; optimized APK may affect hooks." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v21-APK
+          name: AADisplay-CarPlay-v22-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
             source/aa-display/build/outputs/apk/release/*.apk
