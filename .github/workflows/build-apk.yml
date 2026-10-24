@@ -84,7 +84,7 @@ jobs:
       - name: Apply v24 IME-only verification and diagnostics
         working-directory: source
         run: python3 ../apply_v24.py
-      - name: Apply v26 GL capture instrumentation
+      - name: Apply v25 GL capture instrumentation
         working-directory: source
         run: python3 ../apply_v25.py
       - name: Apply v26 GPU screenshots
@@ -135,7 +135,7 @@ jobs:
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" AADisplay-CarPlay-v26-debug.apk AADisplay-CarPlay-v26-optimized-experimental.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v26-debug.apk AADisplay-CarPlay-v26-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v26 GL IME Capture Diagnostics" --notes "v26 adds GLES encoder framebuffer pixel probe and per-pane SurfaceTexture frame counters to isolate why IME is visible in SurfaceFlinger virtual display screenshots but absent on CarPlay. Preserves v23 connection optimization, IME hooks, RTSP, touch and audio. Diagnostic build; IME visibility fix not yet confirmed." --latest
+            gh release create "$tag" AADisplay-CarPlay-v26-debug.apk AADisplay-CarPlay-v26-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v26 GL IME Capture Diagnostics" --notes "v26 saves raw OES pane 0 and 1 screenshots plus the encoder pre-swap composite 15 seconds after attach. v25 frame counters remain enabled. Preserves v23 connection optimization, IME hooks, RTSP, touch and audio. Diagnostic build; IME visibility fix not yet confirmed." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
