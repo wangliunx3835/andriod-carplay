@@ -24,17 +24,10 @@ def one(s: str, old: str, new: str, label: str) -> str:
     return s.replace(old, new, 1)
 
 # Preserve the controller's 200/400ms poll: it powers the hide-keyboard chip.
-# Suppress only the old diagnostic polls and speculative zero-frame relayout.
+# v21 already restored the upstream controller, removing v18-v20 probes.
+# Suppress only the remaining v24 geometry sampler.
 s = ime.read_text(encoding='utf-8')
-s = one(s, '            v20Sample()\n', '', 'v20 periodic WM scan')
 s = one(s, '            v24SampleIme()\n', '', 'v24 periodic geometry scan')
-s = one(s, '                logImeGeometry(displayId)\n', '', 'v18 geometry dump')
-s = one(s, '''                c.mHandler.postDelayed({
-                    if (!c.mIsDestroying && c.isAaVirtualDisplay(displayId)) {
-                        recoverZeroFrameIme(displayId)
-                    }
-                }, 350L)
-''', '', 'v19 delayed layout recovery')
 ime.write_text(s, encoding='utf-8')
 
 s = gl.read_text(encoding='utf-8')
@@ -151,4 +144,4 @@ v = gradle.read_text(encoding='utf-8')
 v = one(v, 'versionCode = 3127', 'versionCode = 3128', 'versionCode')
 v = one(v, 'versionName = "0.3#17.8-v27"', 'versionName = "0.3#17.8-v28"', 'versionName')
 gradle.write_text(v, encoding='utf-8')
-print('v28 applied: disabled v18/v19/v20/v24/v25/v26 diagnostics; kept manual captures; optional experimental IME parent')
+print('v28 applied: disabled remaining v24/v25/v26 diagnostics; kept manual captures; optional experimental IME parent')
