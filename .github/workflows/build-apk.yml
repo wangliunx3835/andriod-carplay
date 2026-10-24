@@ -86,7 +86,7 @@ jobs:
         run: python3 ../apply_v24.py
       - name: Apply v26 GL capture instrumentation
         working-directory: source
-        run: python3 ../apply_v26.py
+        run: python3 ../apply_v25.py
       - name: Apply v26 GPU screenshots
         working-directory: source
         run: python3 ../apply_v26.py
