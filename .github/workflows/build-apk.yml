@@ -1,4 +1,4 @@
-name: Build AADisplay v27 APK
+name: Build AADisplay v28 APK
 on:
   push:
     branches: [main]
@@ -93,6 +93,9 @@ jobs:
       - name: Apply v27 synchronized IME GPU capture
         working-directory: source
         run: python3 ../apply_v27.py
+      - name: Apply v28 lean runtime and optional IME layer experiment
+        working-directory: source
+        run: python3 ../apply_v28.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -130,20 +133,20 @@ jobs:
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v27-debug.apk
+          cp "$apk" AADisplay-CarPlay-v28-debug.apk
           optimized=$(find source/aa-display/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$optimized"
-          cp "$optimized" AADisplay-CarPlay-v27-optimized-experimental.apk
-          tag="v27-ime-synchronized-gpu-capture"
+          cp "$optimized" AADisplay-CarPlay-v28-optimized-experimental.apk
+          tag="v28-lean-ime-layer-experiment"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v27-debug.apk AADisplay-CarPlay-v27-optimized-experimental.apk --clobber
+            gh release upload "$tag" AADisplay-CarPlay-v28-debug.apk AADisplay-CarPlay-v28-optimized-experimental.apk --clobber
           else
-            gh release create "$tag" AADisplay-CarPlay-v27-debug.apk AADisplay-CarPlay-v27-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v27 Synchronized IME GPU Diagnostics" --notes "v27 adds manually triggered synchronized raw OES pane 0/1 and pre-encoder GPU screenshots, retaining the v26 timed capture and v25 frame counters. Preserves v23 IPv4 gateway readiness, IME hooks, RTSP, touch and audio. Diagnostic build; IME visibility fix not yet confirmed." --latest
+            gh release create "$tag" AADisplay-CarPlay-v28-debug.apk AADisplay-CarPlay-v28-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v28 Lean Runtime + Opt-in IME Layer Test" --notes "v28 disables periodic v18/v19/v20/v24 IME diagnostics and v25 glReadPixels, disables v26 automatic PNG readbacks, keeps manual v27 screenshots at 1s polling, and adds OFF-by-default opt-in IME root-layer experiment (root: setprop debug.carplay.v28_ime_root 1; reconnect). Preserves v23 IPv4 readiness and CarPlay features. Keyboard fix not yet confirmed." --latest
           fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v27-APK
+          name: AADisplay-CarPlay-v28-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
             source/aa-display/build/outputs/apk/release/*.apk
