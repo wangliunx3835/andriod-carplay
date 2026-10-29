@@ -59,10 +59,14 @@ internal object CarPlayV33Diag {
 p=base/"CarPlaySourceSession.kt";s=p.read_text()
 s=once(s,'''        supplyFps = CarPlayConsts.DEFAULT_VIDEO_FPS
         badRateWindows = 0
+        goodRateWindows = 0
+        lastDropCount = encoder.dropCount()
 ''','''        supplyFps = CarPlayV33Diag.fps().takeIf { it > 0 }
             ?: CarPlayConsts.DEFAULT_VIDEO_FPS
         Log.i(CarPlayConsts.TAG, "v33 supplyFps=$supplyFps")
         badRateWindows = 0
+        goodRateWindows = 0
+        lastDropCount = encoder.dropCount()
 ''',"fps selection")
 s=once(s,'''    private fun onRateReport(targetFps: Int, actualFps: Float) {
         if (!running.get() || encoder.currentFps() == 0) return
