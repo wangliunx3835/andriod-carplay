@@ -114,9 +114,13 @@ s=once(s,
             },
 ''',"cached accepted LinkSync")
 s=once(s,
-'''            onConnected = { iap2?.onTransportConnected() },
+'''        val link = CarPlayBluetoothLink(
+            appContext,
+            onConnected = { iap2?.onTransportConnected() },
 ''',
-'''            onConnected = {
+'''        val link = CarPlayBluetoothLink(
+            appContext,
+            onConnected = {
                 if (rtsp?.isStreaming() != true &&
                     rtsp?.isAirPlaySourceActive() != true) {
                     v31WifiHandoffPending.set(false)
