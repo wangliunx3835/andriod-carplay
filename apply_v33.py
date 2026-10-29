@@ -143,7 +143,7 @@ s=once(s,'''        onSessionReady()
 p.write_text(s)
 p=base/"CarPlayAudioEgress.kt";s=p.read_text()
 s=once(s,'''        flushPreTxBacklog(profile)
-        // Absolute cadence: at most one packet per interval.
+        // Absolute cadence: at most one packet per interval. Mild "catch-up" bursts used
 ''','''        flushPreTxBacklog(profile)
         // Opt-in: delay only first media RTP, not RTSP SETUP or AAC/PCM format.
         val v33ExtraDelay =
@@ -159,7 +159,7 @@ s=once(s,'''        flushPreTxBacklog(profile)
             rtpTimestamp = CarPlayMediaClock.rtpTimestamp(profile.sampleRate)
             CarPlayV33Diag.stage("audio-delay-finished")
         }
-        // Absolute cadence: at most one packet per interval.
+        // Absolute cadence: at most one packet per interval. Mild "catch-up" bursts used
 ''',"audio delay")
 s=once(s,'''                packets++
                 if (packets <= 3 || packets % 500 == 0) {
