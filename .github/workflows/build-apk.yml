@@ -1,7 +1,7 @@
-name: Build AADisplay v32 Stable Connection APK + Release
+name: Build AADisplay v33 Connection Diagnostics APK + Release
 on:
   push:
-    branches: [v32-stability-release]
+    branches: [v33-diagnostics-release]
   workflow_dispatch:
 jobs:
   build:
@@ -105,9 +105,12 @@ jobs:
       - name: Apply v31 event and handoff fixes
         working-directory: source
         run: python3 ../apply_v31.py
-      - name: Apply v32 codec lifetime and RTSP probe fixes
+      - name: Apply v33 codec lifetime and RTSP probe fixes
         working-directory: source
-        run: python3 ../apply_v32.py
+        run: python3 ../apply_v33.py
+      - name: Apply v33 A/V session diagnostics and optional tests
+        working-directory: source
+        run: python3 ../apply_v33.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -133,26 +136,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v32-debug-APK
+          name: AADisplay-CarPlay-v33-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v32 APK and checksum
+      - name: Verify v33 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v32-debug.apk
-          sha256sum AADisplay-CarPlay-v32-debug.apk | tee v32-sha256.txt
-          unzip -t AADisplay-CarPlay-v32-debug.apk | tail -n 2
-      - name: Publish v32 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v33-debug.apk
+          sha256sum AADisplay-CarPlay-v33-debug.apk | tee v33-sha256.txt
+          unzip -t AADisplay-CarPlay-v33-debug.apk | tail -n 2
+      - name: Publish v33 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v32-carplay-stability \
-            AADisplay-CarPlay-v32-debug.apk v32-sha256.txt \
+          gh release create v33-carplay-stability \
+            AADisplay-CarPlay-v33-debug.apk v33-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v32 – MediaCodec and RTSP Probe Stability" \
-            --notes "v32 fixes MediaCodec stop-vs-drain racing via per-instance generations and serialized codec access, treats /ctrl-int and OPTIONS-only inbound peers as non-owning probes, and deduplicates automatic recovery scheduling. Keeps v23 IPv4 fast readiness, v29 AirPlay single-owner guards, v30 reverse-camera screen arbitration and v31 event demultiplexing. Real HU first-connect behavior still needs testing. IME visibility is not yet resolved."
+            --title "AADisplay CarPlay v33 – MediaCodec and RTSP Probe Stability" \
+            --notes-file V33_TEST_PLAN.md
