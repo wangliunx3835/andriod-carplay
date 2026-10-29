@@ -1,13 +1,13 @@
-name: Build AADisplay v29 APK
+name: Build AADisplay v30 Test APK (No Release)
 on:
   push:
-    branches: [main]
+    branches: [v30-ime-reverse-build]
   workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Fetch pinned upstream
@@ -99,6 +99,9 @@ jobs:
       - name: Apply v29 AirPlay single-owner connection fix
         working-directory: source
         run: python3 ../apply_v29.py
+      - name: Apply v30 reverse camera and IME compatibility
+        working-directory: source
+        run: python3 ../apply_v30.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -121,36 +124,10 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew :aa-display:assembleDebug --stacktrace
-      - name: Build optimized release APK (experimental size comparison)
-        working-directory: source
-        run: ./gradlew :aa-display:assembleRelease --stacktrace
-      - name: APK size comparison
-        run: |
-          du -h source/aa-display/build/outputs/apk/debug/*.apk source/aa-display/build/outputs/apk/release/*.apk
-          unzip -l source/aa-display/build/outputs/apk/debug/*.apk | tail -n 2
-      - name: Publish APK to GitHub Releases
-        if: github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
-          test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v29-debug.apk
-          optimized=$(find source/aa-display/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f -print -quit)
-          test -n "$optimized"
-          cp "$optimized" AADisplay-CarPlay-v29-optimized-experimental.apk
-          tag="v29-airplay-connection-stability"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" AADisplay-CarPlay-v29-debug.apk AADisplay-CarPlay-v29-optimized-experimental.apk --clobber
-          else
-            gh release create "$tag" AADisplay-CarPlay-v29-debug.apk AADisplay-CarPlay-v29-optimized-experimental.apk --target "$GITHUB_SHA" --title "AADisplay CarPlay v29 AirPlay Connection Stability" --notes "v29 atomically serializes source control sessions; defers late 0x4301 until previous handshake fully exits; protects active pairing/streaming against RFCOMM blips and stale inbound peer EOF; sends 1s feedback and 5s UDP keepalive where applicable. Retains v23 IPv4 readiness, v28 lean runtime and existing CarPlay features. First-connect stability awaits real HU testing." --latest
-          fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v29-APK
+          name: AADisplay-CarPlay-v30-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
-            source/aa-display/build/outputs/apk/release/*.apk
           if-no-files-found: error
