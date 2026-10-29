@@ -37,18 +37,17 @@ s=once(s,'''    fun releaseMediaStreams(reason: String) {
         v34MediaReady.set(false)
         streaming.set(false)
 ''',"gate on teardown")
-s=once(s,'''    ): Boolean {
-        val mib3 = huProfile.usesMib3WirelessPath
-        var cseq = cseqStart
-''','''    ): Boolean {
-        val mib3 = huProfile.usesMib3WirelessPath
+start=s.index("    private fun runEncryptedSetupRecord(")
+anchor="        val mib3 = huProfile.usesMib3WirelessPath\n"
+idx=s.index(anchor,start)
+if idx-start>3000: raise AssertionError("v34 RTSP function anchor out of bounds")
+s=s[:idx]+'''        val mib3 = huProfile.usesMib3WirelessPath
         val v34Enabled = !mib3 && CarPlayV34Options.mediaBarrier()
         v34MediaBarrier.set(v34Enabled)
         v34MediaReady.set(!v34Enabled)
         v34SkippedFrames.set(0)
         CarPlayV33Diag.stage("v34-setup-gate", "enabled=$v34Enabled mib3=$mib3")
-        var cseq = cseqStart
-''',"arm gate before SETUP")
+'''+s[idx+len(anchor):]
 s=once(s,'''        streaming.set(true)
         onForceKeyFrame()
 
