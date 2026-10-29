@@ -1,7 +1,7 @@
-name: Build AADisplay v30 Test APK (No Release)
+name: Build AADisplay v31 Test APK (No Release)
 on:
   push:
-    branches: [v30-ime-reverse-build]
+    branches: [v31-connection-handoff-test]
   workflow_dispatch:
 jobs:
   build:
@@ -102,6 +102,9 @@ jobs:
       - name: Apply v30 reverse camera and IME compatibility
         working-directory: source
         run: python3 ../apply_v30.py
+      - name: Apply v31 event protocol and handoff fixes
+        working-directory: source
+        run: python3 ../apply_v31.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -127,7 +130,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v30-debug-APK
+          name: AADisplay-CarPlay-v31-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
