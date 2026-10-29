@@ -130,30 +130,17 @@ s=once(s,
             },
 ''',"reset handoff on new transport")
 s=once(s,
-'''                if (rtsp?.mib3NowPlayingEgress() != null) {
-                    Log.i(CarPlayConsts.TAG, "iAP RFCOMM closed — keep media/NowPlaying (Wi-Fi iAP)")
-                    return@disconnect
-                }
-                rtsp?.releaseMediaStreams("iap-rfcomm-closed")
+'''                Log.i(CarPlayConsts.TAG, "v7 RFCOMM closed without active RTSP: release media")
 ''',
-'''                if (rtsp?.mib3NowPlayingEgress() != null) {
-                    Log.i(CarPlayConsts.TAG, "iAP RFCOMM closed — keep media/NowPlaying (Wi-Fi iAP)")
-                    return@disconnect
-                }
-                // RFCOMM can be intentionally retired after the accessory has
-                // supplied Wi-Fi credentials / StartSession. Before AirPlay
-                // claims its RTSP socket, "not streaming" is NOT disconnected.
-                // Do not release media or launch v14 fallback in this window.
-                if (v31WifiHandoffPending.get() ||
-                    rtsp?.isAirPlaySourceActive() == true ||
-                    rtsp?.isStreaming() == true) {
+'''                // The HU may retire BT immediately after Wi-Fi handoff starts,
+                // but before the source RTSP worker claims the socket. Do not
+                // mistake that transition for a complete CarPlay disconnect.
+                if (v31WifiHandoffPending.get()) {
                     Log.i(CarPlayConsts.TAG,
-                        "v31 RFCOMM closed during handoff/RTSP: preserve session " +
-                            "pending=${v31WifiHandoffPending.get()} " +
-                            "rtspBusy=${rtsp?.isAirPlaySourceActive()}")
+                        "v31 RFCOMM closed while Wi-Fi handoff pending: keep session")
                     return@disconnect
                 }
-                rtsp?.releaseMediaStreams("iap-rfcomm-closed")
+                Log.i(CarPlayConsts.TAG, "v7 RFCOMM closed without active RTSP: release media")
 ''',"protect pre-RTSP handoff")
 s=once(s,
 '''            onWifiConfig = { wifi ->
