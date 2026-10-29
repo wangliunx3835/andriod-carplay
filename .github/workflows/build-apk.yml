@@ -105,9 +105,9 @@ jobs:
       - name: Apply v31 event and handoff fixes
         working-directory: source
         run: python3 ../apply_v31.py
-      - name: Apply v33 codec lifetime and RTSP probe fixes
+      - name: Apply v32 codec lifetime and RTSP probe fixes
         working-directory: source
-        run: python3 ../apply_v33.py
+        run: python3 ../apply_v32.py
       - name: Apply v33 A/V session diagnostics and optional tests
         working-directory: source
         run: python3 ../apply_v33.py
@@ -157,5 +157,5 @@ jobs:
           gh release create v33-carplay-stability \
             AADisplay-CarPlay-v33-debug.apk v33-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v33 – MediaCodec and RTSP Probe Stability" \
+            --title "AADisplay CarPlay v33 – First-Connect Diagnostics and A/V Compatibility" \
             --notes-file V33_TEST_PLAN.md
