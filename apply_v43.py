@@ -25,7 +25,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.os.UserHandle
+import android.os.Process
 import android.provider.Settings
 import io.github.nitsuya.aa.display.xposed.util.log
 
@@ -124,7 +124,7 @@ object V43ImeFreezeGuard {
                 .setPackage("android")
                 .putExtra("pkgName", PKG)
                 .putExtra("option", -1)
-            context.sendBroadcastAsUser(intent, UserHandle.SYSTEM)
+            context.sendBroadcastAsUser(intent, Process.myUserHandle())
             log(TAG, "v43 requested OEM Gboard thaw (broadcast sent; effect unverified)")
         } catch (t: Throwable) {
             log(TAG, "v43 OEM thaw broadcast failed", t)
