@@ -1,7 +1,7 @@
-name: Build AADisplay v42 IME Runtime Diagnostics + Quiet Mute APK + Release
+name: Build AADisplay v43 HyperOS IME Greezer Guard APK + Release
 on:
   push:
-    branches: [v42-ime-runtime-mute-throttle]
+    branches: [v43-hyperos-ime-greezer-guard]
   workflow_dispatch:
 jobs:
   build:
@@ -138,6 +138,9 @@ jobs:
       - name: Apply v42 IME runtime hooks and quiet mute optimization
         working-directory: source
         run: python3 ../apply_v42.py
+      - name: Apply v43 opt-in HyperOS Greezer IME guard
+        working-directory: source
+        run: python3 ../apply_v43.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -163,26 +166,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v42-debug-APK
+          name: AADisplay-CarPlay-v43-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v42 APK and checksum
+      - name: Verify v43 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v42-debug.apk
-          sha256sum AADisplay-CarPlay-v42-debug.apk | tee v42-sha256.txt
-          unzip -t AADisplay-CarPlay-v42-debug.apk | tail -n 2
-      - name: Publish v42 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v43-debug.apk
+          sha256sum AADisplay-CarPlay-v43-debug.apk | tee v43-sha256.txt
+          unzip -t AADisplay-CarPlay-v43-debug.apk | tail -n 2
+      - name: Publish v43 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v42-ime-runtime-mute-throttle \
-            AADisplay-CarPlay-v42-debug.apk v42-sha256.txt \
+          gh release create v43-hyperos-ime-greezer-guard \
+            AADisplay-CarPlay-v43-debug.apk v43-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v42 – IME Runtime + Quiet Mute" \
-            --notes-file V42_TEST_PLAN.md
+            --title "AADisplay CarPlay v43 – HyperOS Greezer IME Guard" \
+            --notes-file V43_TEST_PLAN.md
