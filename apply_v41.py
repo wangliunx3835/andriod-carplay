@@ -145,7 +145,7 @@ addition = '''    /**
         v41LastRepairMs = now
         val ime = imeSurface ?: return
         val placeholder = placeholderSurface ?: return
-        if (ime.isSameSurface(placeholder)) return
+        if (ime === placeholder) return
 
         // Restore only the IME container surface to the placeholder on its
         // same virtual display, never manipulate the physical display 0,
