@@ -38,26 +38,24 @@ internal object CarPlayV39Options {
 
 p = base / "CarPlaySourceSession.kt"
 s = p.read_text(encoding="utf-8")
-s = once(s,
-'''                    Log.i(CarPlayConsts.TAG, "v6 TCP probe begin $addr:$port")
-                    // Probe reachability before committing the AirPlay handshake thread.
-                    if (loopback) {
-                        java.net.Socket().use { probe ->
-                            probe.connect(java.net.InetSocketAddress(addr, port), 2_500)
-                        }
-                    } else {
-                        CarPlayAccessoryNet.openTcp().use { probe ->
-                            probe.connect(java.net.InetSocketAddress(addr, port), 2_500)
-                        }
-                    }
-                    Log.i(CarPlayConsts.TAG, "v6 TCP probe SUCCESS $addr:$port")
-''',
-'''                    // v39: a successful TCP probe followed by immediate EOF is
-                    // interpreted as a lost AirPlay session by some receivers.
-                    // It schedules a delayed retry that tears down the actual
-                    // stream later, even though PairVerify and media SETUP work.
-                    // The real AirPlay RTSP connection already verifies TCP reachability.
-                    // Keep the old probe for wired/loopback and explicit A/B only.
+# Two unique v6 log lines bound the original TCP probe. Match the
+# structure by markers, not an exact multi-line blob: intermediate patches
+# can add harmless comments/logs between these statements.
+begin = '                    Log.i(CarPlayConsts.TAG, "v6 TCP probe begin $addr:$port")'
+finish = '                    Log.i(CarPlayConsts.TAG, "v6 TCP probe SUCCESS $addr:$port")'
+if s.count(begin) != 1 or s.count(finish) != 1:
+    raise AssertionError("v39 expected one v6 preflight begin and finish marker")
+i = s.index(begin)
+j = s.index(finish, i) + len(finish)
+old = s[i:j]
+if (old.count("probe.connect(") != 2 or
+        "java.net.Socket().use { probe ->" not in old or
+        "CarPlayAccessoryNet.openTcp().use { probe ->" not in old):
+    raise AssertionError("v39 preflight body no longer matches known socket behavior")
+replacement = '''                    // v39: an empty pre-RTSP TCP probe reaches DiPlay and
+                    // immediately emits EOF. DiPlay can schedule a stale
+                    // reconnect that later destroys the actual media session.
+                    // Real encrypted RTSP dial handles TCP reachability itself.
                     val v39Preflight = wired || loopback || CarPlayV39Options.legacyTcpProbe()
                     if (v39Preflight) {
                         Log.i(CarPlayConsts.TAG,
@@ -75,8 +73,8 @@ s = once(s,
                     } else {
                         Log.i(CarPlayConsts.TAG,
                             "v39 skip standalone TCP probe wireless $addr:$port; real RTSP dial only")
-                    }
-''', "wireless standalone TCP probe")
+                    }'''
+s = s[:i] + replacement + s[j:]
 p.write_text(s, encoding="utf-8")
 
 p = Path("aa-display/build.gradle.kts")
