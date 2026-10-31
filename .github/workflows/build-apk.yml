@@ -1,7 +1,7 @@
-name: Build AADisplay v35 AirPlay Protocol Diagnostics and Experiments APK + Release
+name: Build AADisplay v36 Lean Baseline and Bonjour Startup Experiment APK + Release
 on:
   push:
-    branches: [v35-airplay-protocol-experiments]
+    branches: [v36-lean-bonjour-experiment]
   workflow_dispatch:
 jobs:
   build:
@@ -117,6 +117,9 @@ jobs:
       - name: Apply v35 feedback diagnostics and opt-in experiments
         working-directory: source
         run: python3 ../apply_v35.py
+      - name: Apply v36 lean defaults and optional Bonjour gate
+        working-directory: source
+        run: python3 ../apply_v36.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -142,26 +145,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v35-debug-APK
+          name: AADisplay-CarPlay-v36-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v35 APK and checksum
+      - name: Verify v36 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v35-debug.apk
-          sha256sum AADisplay-CarPlay-v35-debug.apk | tee v35-sha256.txt
-          unzip -t AADisplay-CarPlay-v35-debug.apk | tail -n 2
-      - name: Publish v35 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v36-debug.apk
+          sha256sum AADisplay-CarPlay-v36-debug.apk | tee v36-sha256.txt
+          unzip -t AADisplay-CarPlay-v36-debug.apk | tail -n 2
+      - name: Publish v36 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v35-airplay-diagnostics \
-            AADisplay-CarPlay-v35-debug.apk v35-sha256.txt \
+          gh release create v36-lean-bonjour \
+            AADisplay-CarPlay-v36-debug.apk v36-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v35 – AirPlay Feedback and Optional Screen/RECORD Experiments" \
-            --notes-file V35_TEST_PLAN.md
+            --title "AADisplay CarPlay v36 – Lean Baseline and Bonjour Registration Readiness A/B" \
+            --notes-file V36_TEST_PLAN.md
