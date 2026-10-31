@@ -1,7 +1,7 @@
-name: Build AADisplay v39 No Standalone TCP Probe APK + Release
+name: Build AADisplay v40 Lean Telemetry APK + Release
 on:
   push:
-    branches: [v39-no-standalone-tcp-probe]
+    branches: [v40-lean-telemetry-artwork]
   workflow_dispatch:
 jobs:
   build:
@@ -129,6 +129,9 @@ jobs:
       - name: Apply v39 no standalone wireless TCP preflight
         working-directory: source
         run: python3 ../apply_v39.py
+      - name: Apply v40 lean artwork and feedback telemetry
+        working-directory: source
+        run: python3 ../apply_v40.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -154,26 +157,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v39-debug-APK
+          name: AADisplay-CarPlay-v40-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v39 APK and checksum
+      - name: Verify v40 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v39-debug.apk
-          sha256sum AADisplay-CarPlay-v39-debug.apk | tee v39-sha256.txt
-          unzip -t AADisplay-CarPlay-v39-debug.apk | tail -n 2
-      - name: Publish v39 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v40-debug.apk
+          sha256sum AADisplay-CarPlay-v40-debug.apk | tee v40-sha256.txt
+          unzip -t AADisplay-CarPlay-v40-debug.apk | tail -n 2
+      - name: Publish v40 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v39-no-standalone-tcp-probe \
-            AADisplay-CarPlay-v39-debug.apk v39-sha256.txt \
+          gh release create v40-lean-telemetry-artwork \
+            AADisplay-CarPlay-v40-debug.apk v40-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v39 – Remove Wireless Empty TCP Probe" \
-            --notes-file V39_TEST_PLAN.md
+            --title "AADisplay CarPlay v40 – Lean Runtime Telemetry and Artwork" \
+            --notes-file V40_TEST_PLAN.md
