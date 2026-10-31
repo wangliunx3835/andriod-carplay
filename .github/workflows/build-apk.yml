@@ -1,7 +1,7 @@
-name: Build AADisplay v37 RTSP Resource Claim and RECORD Ordering Experiments APK + Release
+name: Build AADisplay v38 Continuous Audio RTP A/B APK + Release
 on:
   push:
-    branches: [v37-rtsp-state-ab]
+    branches: [v38-continuous-audio-ab]
   workflow_dispatch:
 jobs:
   build:
@@ -123,6 +123,9 @@ jobs:
       - name: Apply v37 protocol-state A/B experiments
         working-directory: source
         run: python3 ../apply_v37.py
+      - name: Apply v38 continuous PCM RTP audio A/B
+        working-directory: source
+        run: python3 ../apply_v38.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -148,26 +151,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v37-debug-APK
+          name: AADisplay-CarPlay-v38-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v37 APK and checksum
+      - name: Verify v38 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v37-debug.apk
-          sha256sum AADisplay-CarPlay-v37-debug.apk | tee v37-sha256.txt
-          unzip -t AADisplay-CarPlay-v37-debug.apk | tail -n 2
-      - name: Publish v37 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v38-debug.apk
+          sha256sum AADisplay-CarPlay-v38-debug.apk | tee v38-sha256.txt
+          unzip -t AADisplay-CarPlay-v38-debug.apk | tail -n 2
+      - name: Publish v38 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v37-rtsp-state-ab \
-            AADisplay-CarPlay-v37-debug.apk v37-sha256.txt \
+          gh release create v38-continuous-audio-ab \
+            AADisplay-CarPlay-v38-debug.apk v38-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v37 – RTSP Resource Claim and First RECORD Ordering A/B" \
-            --notes-file V37_TEST_PLAN.md
+            --title "AADisplay CarPlay v38 – Continuous First-Audio RTP A/B" \
+            --notes-file V38_TEST_PLAN.md
