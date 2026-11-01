@@ -1,7 +1,7 @@
-name: Build AADisplay v43 HyperOS IME Greezer Guard APK + Release
+name: Build AADisplay v44 IME Parent Policy APK + Release
 on:
   push:
-    branches: [v43-hyperos-ime-greezer-guard]
+    branches: [v44-ime-parent-policy]
   workflow_dispatch:
 jobs:
   build:
@@ -141,6 +141,9 @@ jobs:
       - name: Apply v43 opt-in HyperOS Greezer IME guard
         working-directory: source
         run: python3 ../apply_v43.py
+      - name: Apply v44 opt-in IME parent decision and remove fixed Gboard guard
+        working-directory: source
+        run: python3 ../apply_v44.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -166,26 +169,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v43-debug-APK
+          name: AADisplay-CarPlay-v44-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v43 APK and checksum
+      - name: Verify v44 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v43-debug.apk
-          sha256sum AADisplay-CarPlay-v43-debug.apk | tee v43-sha256.txt
-          unzip -t AADisplay-CarPlay-v43-debug.apk | tail -n 2
-      - name: Publish v43 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v44-debug.apk
+          sha256sum AADisplay-CarPlay-v44-debug.apk | tee v44-sha256.txt
+          unzip -t AADisplay-CarPlay-v44-debug.apk | tail -n 2
+      - name: Publish v44 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v43-hyperos-ime-greezer-guard \
-            AADisplay-CarPlay-v43-debug.apk v43-sha256.txt \
+          gh release create v44-ime-parent-policy \
+            AADisplay-CarPlay-v44-debug.apk v44-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v43 – HyperOS Greezer IME Guard" \
-            --notes-file V43_TEST_PLAN.md
+            --title "AADisplay CarPlay v44 – VirtualDisplay IME Parent Policy" \
+            --notes-file V44_TEST_PLAN.md
