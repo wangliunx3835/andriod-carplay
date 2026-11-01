@@ -65,8 +65,12 @@ s=once(s,
         log(TAG, "v45 discovered computeImeParent(): " +
             method.returnType.name + " attachHook=" + (v45AttachHook != null))
         v44ImeParentHook = method.hookAfter { param ->''',"attachment hook")
-s=once(s,'v41Enabled("debug.carplay.v44_ime_diag")','v41Enabled("debug.carplay.v45_ime_diag")',"diag option callback")
-s=once(s,'v41Enabled("debug.carplay.v44_ime_parent_policy")','v41Enabled("debug.carplay.v45_ime_parent_policy")',"policy option callback")
+s=once(s,'val observe = v41Enabled("debug.carplay.v44_ime_diag")','val observe = v41Enabled("debug.carplay.v45_ime_diag")',"diag option callback")
+s=once(s,
+'''                val repair = v41Enabled("debug.carplay.v44_ime_parent_policy")
+                if (!observe && !repair) return@hookAfter''',
+'''                val repair = v41Enabled("debug.carplay.v45_ime_parent_policy")
+                if (!observe && !repair) return@hookAfter''',"policy option callback")
 s=once(s,
 '''                val selected = param.result as? SurfaceControl''',
 '''                val selected = param.result
