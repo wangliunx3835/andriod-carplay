@@ -16,7 +16,7 @@ s=once(s, "    private var v44ImeParentHook: XC_MethodHook.Unhook? = null",
     private var v45AttachHook: XC_MethodHook.Unhook? = null
     @Volatile private var v45AttachCount = 0
     @Volatile private var v45ParentCount = 0''',"new state")
-s=once(s,"v44HookImeParentChoice()","v45HookImeParentChoice()","call")
+s=once(s,"runCatching { v44HookImeParentChoice() }","runCatching { v45HookImeParentChoice() }","call")
 s=once(s,"private fun v44HookImeParentChoice()","private fun v45HookImeParentChoice()","declaration")
 s=once(s,
 '''name == "computeImeParent" && parameterTypes.isEmpty() &&
