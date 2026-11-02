@@ -20,7 +20,7 @@ code=r'''    /** Reuse screenshot's activity parent, without moving original IME
         val old = v50MirrorByDisplay.remove(id) ?: return
         runCatching {
             SurfaceControl.Transaction().use { tx ->
-                tx.remove(old.second)
+                tx.javaClass.getMethod("remove", SurfaceControl::class.java).invoke(tx, old.second)
                 tx.apply()
             }
         }.onFailure { log(TAG, "v50 mirror remove failed display=$id", it) }
@@ -75,22 +75,26 @@ code=r'''    /** Reuse screenshot's activity parent, without moving original IME
             v50RemoveMirrorLocked(id, "source-changed")
             var mirror: SurfaceControl? = null
             try {
-                mirror = SurfaceControl.mirrorSurface(source)
-                if (mirror.isValid != true) {
+                val realMirror = SurfaceControl::class.java.getDeclaredMethod(
+                    "mirrorSurface", SurfaceControl::class.java
+                ).apply { isAccessible = true }.invoke(null, source) as? SurfaceControl
+                    ?: return
+                mirror = realMirror
+                if (!realMirror.isValid) {
                     mirror?.release()
                     return
                 }
                 SurfaceControl.Transaction().use { tx ->
-                    tx.reparent(mirror, parent)
-                    tx.setLayer(mirror, 1)
+                    tx.reparent(realMirror, parent)
+                    tx.setLayer(realMirror, 1)
                     val frame = v41Call(ime, "getFrame") as? android.graphics.Rect
                     if (frame != null) {
-                        tx.setPosition(mirror, frame.left.toFloat(), frame.top.toFloat())
+                        tx.setPosition(realMirror, frame.left.toFloat(), frame.top.toFloat())
                     }
-                    tx.show(mirror)
+                    tx.javaClass.getMethod("show", SurfaceControl::class.java).invoke(tx, realMirror)
                     tx.apply()
                 }
-                v50MirrorByDisplay[id] = Pair(source, mirror)
+                v50MirrorByDisplay[id] = Pair(source, realMirror)
                 log(TAG, "v50 mirror created display=$id event=$event parent=ActivityRecord")
             } catch (t: Throwable) {
                 runCatching { mirror?.release() }
