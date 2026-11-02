@@ -147,7 +147,7 @@ jobs:
       - name: Apply v45 Android16 WindowContainer IME parent fix
         working-directory: source
         run: python3 ../apply_v45.py
-      - name: Apply v47 only: remove v46 real single display and test IME fullscreen
+      - name: Apply v47 nonfullscreen IME hook without v46 single VD experiment
         working-directory: source
         run: python3 ../apply_v47.py
       - uses: actions/setup-java@v4
