@@ -1,7 +1,7 @@
-name: Build AADisplay v47 Dual VD IME NO_FULLSCREEN A/B APK + Release
+name: Build AADisplay v48 Native IME Parent Timing A/B APK + Release
 on:
   push:
-    branches: [v47-ime-nonfullscreen-clean]
+    branches: [v48-ime-parent-timing-leash-audit]
   workflow_dispatch:
 jobs:
   build:
@@ -150,6 +150,9 @@ jobs:
       - name: Apply v47 nonfullscreen IME hook without v46 single VD experiment
         working-directory: source
         run: python3 ../apply_v47.py
+      - name: Apply v48 IME parent timing correction and leash audit
+        working-directory: source
+        run: python3 ../apply_v48.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -175,26 +178,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v47-debug-APK
+          name: AADisplay-CarPlay-v48-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v47 APK and checksum
+      - name: Verify v48 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v47-debug.apk
-          sha256sum AADisplay-CarPlay-v47-debug.apk | tee v47-sha256.txt
-          unzip -t AADisplay-CarPlay-v47-debug.apk | tail -n 2
-      - name: Publish v47 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v48-debug.apk
+          sha256sum AADisplay-CarPlay-v48-debug.apk | tee v48-sha256.txt
+          unzip -t AADisplay-CarPlay-v48-debug.apk | tail -n 2
+      - name: Publish v48 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v47-ime-nonfullscreen-clean \
-            AADisplay-CarPlay-v47-debug.apk v47-sha256.txt \
+          gh release create v48-ime-parent-timing-leash-audit \
+            AADisplay-CarPlay-v48-debug.apk v48-sha256.txt \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v47 – Dual VD IME NO_FULLSCREEN" \
-            --notes-file V47_TEST_PLAN.md
+            --title "AADisplay CarPlay v48 – Native IME Parent Timing + Leash Audit" \
+            --notes-file V48_CODE_AUDIT_AND_TEST.md
