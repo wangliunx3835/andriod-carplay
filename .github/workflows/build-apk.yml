@@ -1,7 +1,7 @@
-name: Build AADisplay v50 IME Mirror + Reverse Ownership A/B APK + Release
+name: Build AADisplay v51 Reverse Default and Crash-Safe Cleanup APK + Release
 on:
   push:
-    branches: [v50-ime-mirror-reverse-arbitration]
+    branches: [v51-reverse-default-crash-recovery]
   workflow_dispatch:
 jobs:
   build:
@@ -159,6 +159,9 @@ jobs:
       - name: Apply v50 opt-in mirror and reverse ownership gate
         working-directory: source
         run: python3 ../apply_v50.py
+      - name: Apply v51 reverse default + crash recovery
+        working-directory: source
+        run: python3 ../apply_v51.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -184,26 +187,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v50-debug-APK
+          name: AADisplay-CarPlay-v51-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v50 APK and checksum
+      - name: Verify v51 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v50-debug.apk
-          sha256sum AADisplay-CarPlay-v50-debug.apk | tee v50-sha256.txt
-          unzip -t AADisplay-CarPlay-v50-debug.apk | tail -n 2
-      - name: Publish v50 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v51-debug.apk
+          sha256sum AADisplay-CarPlay-v51-debug.apk | tee v51-sha256.txt
+          unzip -t AADisplay-CarPlay-v51-debug.apk | tail -n 2
+      - name: Publish v51 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v50-ime-mirror-reverse-arbitration \
-            AADisplay-CarPlay-v50-debug.apk v50-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh \
+          gh release create v51-reverse-default-crash-recovery \
+            AADisplay-CarPlay-v51-debug.apk v51-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v50 – IME Mirror + Reverse Ownership" \
-            --notes-file V50_TEST_PLAN.md
+            --title "AADisplay CarPlay v51 – Reverse Default + Crash Recovery" \
+            --notes-file V51_TEST_PLAN.md
