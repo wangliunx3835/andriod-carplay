@@ -122,9 +122,7 @@ import java.util.concurrent.LinkedBlockingQueue''',"import"),
             // next drain iteration waiting for the HU TCP sink.
             v57QueueEncoded(bytes, pts, key, config)''',"drain offload"),
 ('''    fun stop() {
-        running.set(false)
-        try {
-            codec?.stop()''',
+        running.set(false)''',
  '''    fun stop() {
         running.set(false)
         v57Epoch.incrementAndGet()
@@ -132,9 +130,7 @@ import java.util.concurrent.LinkedBlockingQueue''',"import"),
             v57Pending.clear()
             v57AwaitIdr=true
             v57Lock.notifyAll()
-        }
-        try {
-            codec?.stop()''',"stop queue")
+        }''',"stop queue")
 ])
 
 replace("carplay/protocol/ScreenStreamEgress.kt",[
