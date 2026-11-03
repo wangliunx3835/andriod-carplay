@@ -13,3 +13,8 @@ After installing v52 reboot Android for the existing LSPosed system_server basel
 **Log:** logcat -d -t 12000 -v threadtime | grep -iE 'v52|media overlay|CarPlayGlCompositor|keyframe|MainScreen|black|Exception' > /sdcard/Download/v52_media_filtered.txt
 
 **Limits:** no supplied timed LRC = no next line. Android media-session specifics differ by app; controls must be validated on-device. No OS privacy-protection override. To fully disable without changing stable CarPlay logic, switch the overlay OFF in app settings.
+
+### v52r1 final QA
+- Paused playback retains last media metadata and album art even after 15-second freshness timeout in the instrument-cluster store.
+- Media overlay paints beneath modal app-picker and recents, matching their existing touch priority.
+- No CarPlay connection, reverse, encoder, codec, or audio changes relative to v51.

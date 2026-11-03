@@ -194,12 +194,16 @@ object CarPlayMediaOverlay {
         if (!cfg.enabled) { media = Media(); return }
         val cr = c.contentResolver
         val fresh = ClusterLyricStore.readFresh(cr)
-        if (fresh == null) { media = Media(); return }
+        // v52r1: paused player must retain art even when ticker expires at 15s.
+        val rawTitle = fresh?.title ?: Settings.Global.getString(cr,
+            ClusterLyricStore.SETTINGS_TITLE)?.trim().orEmpty()
+        if (rawTitle.isBlank()) { media = Media(); return }
         val song = Settings.Global.getString(cr, ClusterLyricStore.SETTINGS_OVERLAY_SONG)?.trim().orEmpty()
         val artist = Settings.Global.getString(cr, ClusterLyricStore.SETTINGS_OVERLAY_ARTIST)?.trim().orEmpty()
         val next = Settings.Global.getString(cr, ClusterLyricStore.SETTINGS_OVERLAY_NEXT)?.trim().orEmpty()
         val trackId = Settings.Global.getString(cr, ClusterLyricStore.SETTINGS_TRACK_MEDIA_ID)?.trim().orEmpty()
         val state = ClusterLyricStore.readProgress(cr)?.playbackState
+            ?: Settings.Global.getString(cr, ClusterLyricStore.SETTINGS_PLAYBACK_STATE)?.toIntOrNull()
         val playing = state == PlaybackState.STATE_PLAYING ||
             state == PlaybackState.STATE_BUFFERING
         val revision = ClusterArtStore.readRevision(cr)
@@ -215,9 +219,10 @@ object CarPlayMediaOverlay {
             } else null
         }
         media = Media(
-            title = song.ifEmpty { fresh.title },
-            artist = artist.ifEmpty { fresh.subtitle },
-            current = fresh.title.takeIf { it != song && it.isNotBlank() }.orEmpty(),
+            title = song.ifEmpty { rawTitle },
+            artist = artist.ifEmpty { fresh?.subtitle ?: Settings.Global.getString(cr,
+                ClusterLyricStore.SETTINGS_SUBTITLE).orEmpty() },
+            current = rawTitle.takeIf { it != song && it.isNotBlank() }.orEmpty(),
             next = next,
             playing = playing,
             art = cachedArt,
@@ -489,15 +494,21 @@ object CarPlayMediaSettingsUi {
 ''')
 
 update("java/io/github/nitsuya/aa/display/carplay/CarPlayGlCompositor.kt",[
-('''        if (showPicker) {
+('''        if (showRecents) {
+            CarPlayRecentsOverlay.draw(canvas, encodeWidth, encodeHeight)
+        }
+        if (showPicker) {
             CarPlayAppPickerOverlay.draw(canvas, encodeWidth, encodeHeight)
         }
         GLES20.glBindTexture''',
-'''        if (showPicker) {
+'''        // Paint behind modal picker/recents; they retain first touch priority.
+        CarPlayMediaOverlay.draw(canvas, encodeWidth, encodeHeight)
+        if (showRecents) {
+            CarPlayRecentsOverlay.draw(canvas, encodeWidth, encodeHeight)
+        }
+        if (showPicker) {
             CarPlayAppPickerOverlay.draw(canvas, encodeWidth, encodeHeight)
         }
-        // v52: paint within the existing GL chrome texture, no new video path.
-        CarPlayMediaOverlay.draw(canvas, encodeWidth, encodeHeight)
         GLES20.glBindTexture''',"GL composite")
 ])
 update("java/io/github/nitsuya/aa/display/carplay/FrameEgressTee.kt",[
