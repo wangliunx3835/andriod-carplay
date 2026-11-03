@@ -185,29 +185,21 @@ change("AndroidManifest.xml",
         <activity
             android:name=".ui.main.MainActivity"''')
 change(J+"carplay/CarPlayMediaOverlay.kt",
-'''        val sourcePkg=Settings.Global.getString(cr,ClusterLyricStore.SETTINGS_SOURCE_PKG).orEmpty()
+'''        media = Media(
+            title = song.ifEmpty { rawTitle },''',
+'''        val currentPkg=Settings.Global.getString(cr,ClusterLyricStore.SETTINGS_SOURCE_PKG).orEmpty()
         val progress=ClusterLyricStore.readProgress(cr)
         val lyricPos=progress?.let { ClusterLyricStore.extrapolatePosition(it) } ?:0L
-        val v53Pair=V53CapturedLyrics.get(c,sourcePkg,lyricPos)
+        val v53Pair=V53CapturedLyrics.get(c,currentPkg,lyricPos)
         media = Media(
-            title = song.ifEmpty { rawTitle },''',
-'''        // Captured raw LRC/KRC is consulted only for the actual currently
-        // chosen app; never display other apps' latest cached lyrics.
-        val currentPkg=Settings.Global.getString(cr,ClusterLyricStore.SETTINGS_SOURCE_PKG).orEmpty()
-        val trackProgress=ClusterLyricStore.readProgress(cr)
-        val trackPos=trackProgress?.let{ClusterLyricStore.extrapolatePosition(it)} ?:0L
-        val v53Pair=V53CapturedLyrics.get(c,currentPkg,trackPos)
-        media = Media(
-            title = if(realFresh && realSong.isNotBlank()) realSong else song.ifEmpty { rawTitle },''')
+            title = song.ifEmpty { rawTitle },''')
 change(J+"carplay/CarPlayMediaOverlay.kt",
+'''            current = rawTitle.takeIf { it != song && it.isNotBlank() }.orEmpty(),
+            next = next,''',
 '''            current = v53Pair.first.ifBlank {
                 rawTitle.takeIf { it != song && it.isNotBlank() }.orEmpty()
             },
-            next = v53Pair.second.ifBlank { next },''',
-'''            current = v53Pair.first.ifBlank {
-                rawTitle.takeIf { it != song && it != realSong && it.isNotBlank() }.orEmpty()
-            },
-            next = v53Pair.second.ifBlank{next},''')
+            next = v53Pair.second.ifBlank { next },''')
 p=Path("aa-display/build.gradle.kts")
 v=p.read_text();assert "versionCode = 3152" in v and 'versionName = "0.3#17.8-v52"' in v
 v=v.replace("versionCode = 3152","versionCode = 3153").replace('versionName = "0.3#17.8-v52"','versionName = "0.3#17.8-v53"')
