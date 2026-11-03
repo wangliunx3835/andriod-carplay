@@ -8,7 +8,7 @@ def add(path,src):
  p=R/path;assert not p.exists();p.parent.mkdir(parents=True,exist_ok=True);p.write_text(src)
 J="java/io/github/nitsuya/aa/display/"
 add(J+"xposed/hook/V53SodaHook.kt",r'''package io.github.nitsuya.aa.display.xposed.hook
-import android.app.AndroidAppHelper
+import de.robv.android.xposed.AndroidAppHelper
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
