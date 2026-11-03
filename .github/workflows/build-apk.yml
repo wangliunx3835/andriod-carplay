@@ -1,7 +1,7 @@
-name: Build AADisplay v52r1 Floating Media Final QA APK + Release
+name: Build AADisplay v53 Bluetooth Lyrics Capture APK + Release
 on:
   push:
-    branches: [v52-floating-media-overlay-r1]
+    branches: [v53-bluetooth-lyric-capture]
   workflow_dispatch:
 jobs:
   build:
@@ -165,6 +165,9 @@ jobs:
       - name: Apply v52 floating media and phone settings
         working-directory: source
         run: python3 ../apply_v52.py
+      - name: Apply v53 app-scoped lyric capture
+        working-directory: source
+        run: python3 ../apply_v53.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -190,26 +193,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v52r1-debug-APK
+          name: AADisplay-CarPlay-v53-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v52r1 APK and checksum
+      - name: Verify v53 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v52r1-debug.apk
-          sha256sum AADisplay-CarPlay-v52r1-debug.apk | tee v52r1-sha256.txt
-          unzip -t AADisplay-CarPlay-v52r1-debug.apk | tail -n 2
-      - name: Publish v52r1 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v53-debug.apk
+          sha256sum AADisplay-CarPlay-v53-debug.apk | tee v53-sha256.txt
+          unzip -t AADisplay-CarPlay-v53-debug.apk | tail -n 2
+      - name: Publish v53 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v52-floating-media-overlay-r1 \
-            AADisplay-CarPlay-v52r1-debug.apk v52r1-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
+          gh release create v53-bluetooth-lyric-capture \
+            AADisplay-CarPlay-v53-debug.apk v53-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v52r1 – Floating Media QA" \
-            --notes-file V52_TEST_PLAN.md
+            --title "AADisplay CarPlay v53 – Bluetooth Lyrics Capture" \
+            --notes-file V53_TEST_PLAN.md
