@@ -12,11 +12,11 @@ def sub(path, old, new, label):
 
 sub("carplay/CarPlaySourceSession.kt",
     'val written = rtsp?.sendVideoAccessUnit(bytes, ptsUs, key, config) ?: 0',
-    'val queued = rtsp?.enqueueEncodedVideo(bytes, ptsUs, key, config) == true',
+    'val written = if (rtsp?.enqueueEncodedVideo(bytes, ptsUs, key, config) == true) 1 else 0',
     "source queue")
 sub("carplay/CarPlaySourceSession.kt",
     'packets=$written streaming=',
-    'queueAccepted=$queued streaming=',
+    'queueAccepted=$written streaming=',
     "source log")
 
 sub("carplay/CarPlayRtspSession.kt",
