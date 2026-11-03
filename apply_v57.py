@@ -56,11 +56,9 @@ sub("carplay/CarPlayRtspSession.kt",
     "queue API")
 
 sub("carplay/CarPlayRtspSession.kt",
+    '    fun releaseMediaStreams(reason: String) {',
     '''    fun releaseMediaStreams(reason: String) {
-        streaming.set(false)''',
-    '''    fun releaseMediaStreams(reason: String) {
-        v57VideoQueue.reset("release:" + reason)
-        streaming.set(false)''',
+        v57VideoQueue.reset("release:" + reason)''',
     "media release")
 
 sub("carplay/CarPlayRtspSession.kt",
