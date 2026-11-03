@@ -1,7 +1,7 @@
-name: Build AADisplay v55 RequestUI Screen Re-entry APK + Release
+name: Build AADisplay v56 Re-entry + Media Size and Scrolling Lyrics APK + Release
 on:
   push:
-    branches: [v55-requestui-screen-reclaim]
+    branches: [v56-reentry-media-resize-scroll]
   workflow_dispatch:
 jobs:
   build:
@@ -174,6 +174,9 @@ jobs:
       - name: Apply v55 guarded requestUI reclaim
         working-directory: source
         run: python3 ../apply_v55.py
+      - name: Apply v56 independent media dimensions and lyric scroll
+        working-directory: source
+        run: python3 ../apply_v56.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -199,26 +202,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v55-debug-APK
+          name: AADisplay-CarPlay-v56-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v55 APK and checksum
+      - name: Verify v56 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v55-debug.apk
-          sha256sum AADisplay-CarPlay-v55-debug.apk | tee v55-sha256.txt
-          unzip -t AADisplay-CarPlay-v55-debug.apk | tail -n 2
-      - name: Publish v55 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v56-debug.apk
+          sha256sum AADisplay-CarPlay-v56-debug.apk | tee v56-sha256.txt
+          unzip -t AADisplay-CarPlay-v56-debug.apk | tail -n 2
+      - name: Publish v56 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v55-requestui-screen-reclaim \
-            AADisplay-CarPlay-v55-debug.apk v55-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
+          gh release create v56-reentry-media-resize-scroll \
+            AADisplay-CarPlay-v56-debug.apk v56-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v55 – RequestUI Screen Re-entry" \
-            --notes-file V55_TEST_PLAN.md
+            --title "AADisplay CarPlay v56 – Re-entry + Scrolling Lyrics" \
+            --notes-file V56_TEST_PLAN.md
