@@ -1,7 +1,7 @@
-name: Build AADisplay v53r3 Raw Lyrics Capture Validation APK + Release
+name: Build AADisplay v53r4 Raw Lyrics Capture Validation APK + Release
 on:
   push:
-    branches: [v53-soda-lyric-hook-r3]
+    branches: [v53-soda-lyric-hook-r4]
   workflow_dispatch:
 jobs:
   build:
@@ -193,26 +193,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v53r3-debug-APK
+          name: AADisplay-CarPlay-v53r4-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v53r3 APK and checksum
+      - name: Verify v53r4 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v53r3-debug.apk
-          sha256sum AADisplay-CarPlay-v53r3-debug.apk | tee v53r3-sha256.txt
-          unzip -t AADisplay-CarPlay-v53r3-debug.apk | tail -n 2
-      - name: Publish v53r3 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v53r4-debug.apk
+          sha256sum AADisplay-CarPlay-v53r4-debug.apk | tee v53r4-sha256.txt
+          unzip -t AADisplay-CarPlay-v53r4-debug.apk | tail -n 2
+      - name: Publish v53r4 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v53-soda-lyric-hook-r3 \
-            AADisplay-CarPlay-v53r3-debug.apk v53r3-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
+          gh release create v53-soda-lyric-hook-r4 \
+            AADisplay-CarPlay-v53r4-debug.apk v53r4-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v53r3 – Raw Lyric Capture" \
+            --title "AADisplay CarPlay v53r4 – Raw Lyric Capture" \
             --notes-file V53_TEST_PLAN.md

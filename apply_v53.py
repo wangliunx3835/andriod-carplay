@@ -8,7 +8,7 @@ def add(path,src):
  p=R/path;assert not p.exists();p.parent.mkdir(parents=True,exist_ok=True);p.write_text(src)
 J="java/io/github/nitsuya/aa/display/"
 add(J+"xposed/hook/V53SodaHook.kt",r'''package io.github.nitsuya.aa.display.xposed.hook
-import de.robv.android.xposed.AndroidAppHelper
+import android.app.Application
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -59,7 +59,10 @@ object V53SodaHook {
         val key=pkg.hashCode()*31+body.hashCode()+fmt.hashCode()
         if(key==lastHash)return
         lastHash=key
-        val app=AndroidAppHelper.currentApplication() ?:run {
+        val app=runCatching {
+            val at=Class.forName("android.app.ActivityThread")
+            at.getDeclaredMethod("currentApplication").invoke(null) as? Application
+        }.getOrNull() ?:run {
             Log.w(TAG,"App context unavailable");return
         }
         runCatching {
