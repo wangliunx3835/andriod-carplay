@@ -117,10 +117,10 @@ import java.util.concurrent.LinkedBlockingQueue''',"import"),
  '''        stop()
         v57StartSender()
         // CSM ScreenH264Encoder''',"start worker"),
-('''                            onEncodedAccessUnit(bytes, info.presentationTimeUs, key, config)''',
- '''                            // COPY already made; queue immediately so finally can
-                            // release MediaCodec output buffer even if HU blocks TCP.
-                            v57QueueEncoded(bytes, info.presentationTimeUs, key, config)''',"drain offload"),
+('''                            onEncodedAccessUnit(bytes, pts, key, config)''',
+ '''            // v32 has already released the output buffer; do not block the
+            // next drain iteration waiting for the HU TCP sink.
+            v57QueueEncoded(bytes, pts, key, config)''',"drain offload"),
 ('''    fun stop() {
         running.set(false)
         try {

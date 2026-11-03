@@ -2,10 +2,10 @@
 Includes all v2–v56 patches, QQ/Soda lyrics, independent floating dimensions and 430ms rolling lyrics, v55 MainScreen requestUI re-entry.
 
 ## User log evidence
-At 21:43:53 MainScreen 1/1 and modesChanged 200; at 21:43:57 MTK CCodecBuffers output stash 11->16; at 21:43:59 black-screen mark while AAC audio continues; at 21:44:11 MediaCodec encode 0, DQout 0. The synchronous encoded-frame callback previously called ScreenStreamEgress.write+flush before MediaCodec.releaseOutputBuffer. Socket backpressure is strongly plausible but not confirmed by Java thread dump.
+At 21:43:53 MainScreen 1/1 and modesChanged 200; at 21:43:57 MTK CCodecBuffers output stash 11->16; at 21:43:59 black-screen mark while AAC audio continues; at 21:44:11 MediaCodec encode 0, DQout 0. The v32 drainOnce already copies and releases each MediaCodec output buffer before invoking onEncodedAccessUnit. However that callback synchronously writes and flushes TCP on the same drain thread, potentially blocking the next dequeue. Socket backpressure is plausible but not proven by a Java thread dump.
 
 ## Fix
-- CarPlayVideoEncoder.drainOnce now copies already-dequeued output into an 8-frame bounded queue and promptly releases MediaCodec output buffers. A single daemon video writer invokes unchanged sendVideoAccessUnit/ScreenStreamEgress, preserving TCP per-frame flush, packet order, AirPlay H264 CONFIG and ChaCha nonce progression.
+- The preexisting v32 drainOnce releases output before the callback; v57 sends copied output to an 8-frame bounded queue instead of waiting for socket writes. A single daemon video writer invokes unchanged sendVideoAccessUnit/ScreenStreamEgress, preserving TCP per-frame flush, packet order, AirPlay H264 CONFIG and ChaCha nonce progression.
 - Full queue discards obsolete queued non-CONFIG AVC frames, waits for a new IDR, retains codec CONFIG. Natural 1-second keyframe interval allows resynchronization. No unbounded memory use, no per-frame thread launch.
 - On encoder stop/restart, pending queue is cleared and generation incremented, preventing old queued frames from leaking to new codec instance. On egress close the TCP socket is closed before BufferedOutputStream so blocked output is interrupted.
 - Does not change AirPlay pairing, RTSP exchanges, event modes, reverse priority, sender codec parameters, audio, keyboard, split displays or lyrics/overlay.
