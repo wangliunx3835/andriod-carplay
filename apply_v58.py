@@ -13,6 +13,12 @@ def one(path,old,new,label):
     if n!=1: raise AssertionError("v58 "+label+" count="+str(n))
     p.write_text(s.replace(old,new,1),encoding="utf-8")
 
+# Observe whether the screen-only TCP egress has already closed.
+one("carplay/protocol/ScreenStreamEgress.kt",
+'''    fun hasSentConfig(): Boolean = configSent.get()''',
+'''    fun hasSentConfig(): Boolean = configSent.get()
+    fun isClosed(): Boolean = closed.get()''',"screen socket state")
+
 # Queue no longer accepts any new compressed video while the HU owns the screen.
 one("carplay/CarPlayV57VideoQueue.kt",
 '''    fun close() {
