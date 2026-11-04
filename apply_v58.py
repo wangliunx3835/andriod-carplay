@@ -232,7 +232,7 @@ sub("carplay/CarPlayRtspSession.kt",
                     "v58 screen SETUP refused=" + response?.firstLine)
                 false
             } else {
-                val decoded = BinaryPlist.asDict(BinaryPlist.decode(response?.body))
+                val decoded = response?.body?.let { BinaryPlist.asDict(BinaryPlist.decode(it)) }
                 val returned = decoded?.get("streams") as? List<*>
                 val selected = returned?.firstNotNullOfOrNull { value ->
                     val d = BinaryPlist.asDict(value)
