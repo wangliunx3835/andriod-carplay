@@ -1,7 +1,7 @@
-name: Build AADisplay v57 Bounded Video Egress APK + Release
+name: Build AADisplay v58 Reverse Video Screen Resume APK + Release
 on:
   push:
-    branches: [v57-bounded-video-egress]
+    branches: [v58-video-screen-resume]
   workflow_dispatch:
 jobs:
   build:
@@ -180,6 +180,9 @@ jobs:
       - name: Apply v57 bounded video sender and TCP close repair
         working-directory: source
         run: python3 ../apply_v57.py
+      - name: Apply v58 video-only guarded screen recovery
+        working-directory: source
+        run: python3 ../apply_v58.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -205,26 +208,26 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v57-debug-APK
+          name: AADisplay-CarPlay-v58-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v57 APK and checksum
+      - name: Verify v58 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v57-debug.apk
-          sha256sum AADisplay-CarPlay-v57-debug.apk | tee v57-sha256.txt
-          unzip -t AADisplay-CarPlay-v57-debug.apk | tail -n 2
-      - name: Publish v57 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v58-debug.apk
+          sha256sum AADisplay-CarPlay-v58-debug.apk | tee v58-sha256.txt
+          unzip -t AADisplay-CarPlay-v58-debug.apk | tail -n 2
+      - name: Publish v58 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v57-bounded-video-egress \
-            AADisplay-CarPlay-v57-debug.apk v57-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
+          gh release create v58-video-screen-resume \
+            AADisplay-CarPlay-v58-debug.apk v58-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
             --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v57 – Bounded Video Egress" \
-            --notes-file V57_TEST_PLAN.md
+            --title "AADisplay CarPlay v58 – Reverse Video Screen Resume" \
+            --notes-file V58_TEST_PLAN.md
