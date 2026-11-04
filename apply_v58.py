@@ -153,11 +153,9 @@ one("carplay/CarPlayRtspSession.kt",
         } else {''',"upstream enqueue gate")
 
 one("carplay/CarPlayRtspSession.kt",
-'''    ): Int {
-        if (isCodecConfig) {
+'''        if (isCodecConfig) {
             lastCodecConfig.set(au)''',
-'''    ): Int {
-        if (v58Enabled && v58VideoUnusable.get()) return 0
+'''        if (v58Enabled && v58VideoUnusable.get()) return 0
         if (isCodecConfig) {
             lastCodecConfig.set(au)''',"suppress RTP fallback")
 
