@@ -22,8 +22,7 @@ def one(path, old, new, label):
 # existing v57 ordered worker, rather than touching AAC/RTSP sockets.
 # SO_SNDBUF is a kernel hint: log the actual value. Property 0 disables.
 one("carplay/protocol/ScreenStreamEgress.kt",
-    """                socket.tcpNoDelay = true
-                socket.connect(InetSocketAddress(host, dataPort), 10_000)""",
+    """                socket.tcpNoDelay = true""",
     """                socket.tcpNoDelay = true
                 val v59BufferKb = runCatching {
                     val cls = Class.forName("android.os.SystemProperties")
@@ -39,7 +38,7 @@ one("carplay/protocol/ScreenStreamEgress.kt",
                 Log.i(CarPlayConsts.TAG, "v59 video SO_SNDBUF requestedKB=" +
                     v59BufferKb + " actualKB=" +
                     runCatching { socket.sendBufferSize / 1024 }.getOrDefault(-1))
-                socket.connect(InetSocketAddress(host, dataPort), 10_000)""",
+                """,
     "video socket buffer")
 
 # The v58 stalledForMs() checks only an in-flight Socket.write. A queued
