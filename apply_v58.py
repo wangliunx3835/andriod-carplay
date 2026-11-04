@@ -177,12 +177,8 @@ one("carplay/CarPlayRtspSession.kt",
 # Recovery uses the authenticated AirPlay control channel and only SETUP
 # stream type 110 with a new connection ID. It does not touch AAC SETUP/teardown.
 one("carplay/CarPlayRtspSession.kt",
-'''        streaming.set(true)
-        onForceKeyFrame()
-
-        // Audio:''',
-'''        streaming.set(true)
-        v58VideoUnusable.set(false)
+'        // Audio: Audi MIB3 needs type-102 AAC-LC',
+'''        v58VideoUnusable.set(false)
         v58ReopenScreen.set {
             if (!v58Enabled || !controlPumpLive.get() ||
                 !running.get() || !streaming.get() ||
@@ -222,9 +218,7 @@ one("carplay/CarPlayRtspSession.kt",
                 }
             }
         }
-        onForceKeyFrame()
-
-        // Audio:''',"screen-only SETUP")
+        // Audio: Audi MIB3 needs type-102 AAC-LC''',"screen-only SETUP")
 
 one("carplay/CarPlayRtspSession.kt",
 '''    fun releaseMediaStreams(reason: String) {
