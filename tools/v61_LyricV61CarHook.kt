@@ -1,6 +1,7 @@
 package io.github.nitsuya.aa.display.xposed.hook
 
 import android.app.Application
+import android.app.Service
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
@@ -29,6 +30,7 @@ object LyricV61CarHook : BaseHook() {
         if (lp.packageName != "com.luna.music.car") return
         var ctx: Context? = null
         var lastKey = ""
+        var lastMetaAt = 0L
         var lastCover = ""
         var lastArtUri = ""
         var lastState = -1
@@ -107,16 +109,21 @@ object LyricV61CarHook : BaseHook() {
             if (name.isBlank()) return
             val singer = artist.trim().take(160)
             val key = id.trim().ifBlank { "car:" + (name + "|" + singer).hashCode() }
-            if (key != lastKey) {
+            val changed = key != lastKey
+            val now = SystemClock.elapsedRealtime()
+            if (changed) {
                 lastKey = key
                 Log.i(tagName, "v61 car metadata source=" + source +
                     " titleLen=" + name.length + " artistLen=" + singer.length +
                     " cover=" + (image != null))
             }
-            feed("meta") {
-                it.putString("song", name)
-                it.putString("artist", singer)
-                it.putString("id", key)
+            if (changed || now - lastMetaAt >= 10_000L) {
+                lastMetaAt = now
+                feed("meta") {
+                    it.putString("song", name)
+                    it.putString("artist", singer)
+                    it.putString("id", key)
+                }
             }
             cover(image, key)
         }
@@ -181,25 +188,35 @@ object LyricV61CarHook : BaseHook() {
                             }
                         })
 
-                    // Some older car builds only expose MediaStyle notifications.
+                    // Some car variants use a foreground MediaStyle service
+                    // instead of a public MediaSession, or call notify() directly.
+                    fun observeMediaNotification(n: Notification) {
+                        if (SystemClock.elapsedRealtime() - lastSessionAt < 4_000L) return
+                        val extras = n.extras ?: return
+                        if (n.category != Notification.CATEGORY_TRANSPORT &&
+                            !extras.containsKey("android.mediaSession")) return
+                        val title = extras.getCharSequence(Notification.EXTRA_TITLE)
+                            ?.toString().orEmpty()
+                        val artist = extras.getCharSequence(Notification.EXTRA_TEXT)
+                            ?.toString().orEmpty()
+                        val image = n.largeIcon ?: runCatching {
+                            (n.getLargeIcon()?.loadDrawable(ctx) as? BitmapDrawable)?.bitmap
+                        }.getOrNull()
+                        publish(title, artist, "", image, "notification")
+                        state(PlaybackState.STATE_PLAYING, 0L)
+                    }
                     XposedBridge.hookAllMethods(NotificationManager::class.java, "notify",
                         object : XC_MethodHook() {
                             override fun afterHookedMethod(q: MethodHookParam) {
-                                if (SystemClock.elapsedRealtime() - lastSessionAt < 4_000L) return
-                                val n = q.args.firstOrNull { it is Notification } as? Notification
-                                    ?: return
-                                val extras = n.extras ?: return
-                                if (n.category != Notification.CATEGORY_TRANSPORT &&
-                                    !extras.containsKey("android.mediaSession")) return
-                                val title = extras.getCharSequence(Notification.EXTRA_TITLE)
-                                    ?.toString().orEmpty()
-                                val artist = extras.getCharSequence(Notification.EXTRA_TEXT)
-                                    ?.toString().orEmpty()
-                                val image = n.largeIcon ?: runCatching {
-                                    (n.getLargeIcon()?.loadDrawable(ctx) as? BitmapDrawable)?.bitmap
-                                }.getOrNull()
-                                publish(title, artist, "", image, "notification")
-                                state(PlaybackState.STATE_PLAYING, 0L)
+                                (q.args.firstOrNull { it is Notification } as? Notification)
+                                    ?.let { observeMediaNotification(it) }
+                            }
+                        })
+                    XposedBridge.hookAllMethods(Service::class.java, "startForeground",
+                        object : XC_MethodHook() {
+                            override fun afterHookedMethod(q: MethodHookParam) {
+                                (q.args.firstOrNull { it is Notification } as? Notification)
+                                    ?.let { observeMediaNotification(it) }
                             }
                         })
 
