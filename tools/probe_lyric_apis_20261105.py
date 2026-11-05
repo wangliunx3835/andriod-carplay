@@ -78,6 +78,11 @@ def summarize(data):
             summary["lyric_type"]=type(body["lyric"]).__name__
             if isinstance(body["lyric"],dict):
                 summary["lyric_keys"]=list(body["lyric"])[:20]
+        if current_label == "netease_user_search":
+            summary["result_type"]=type(body.get("result")).__name__
+            if isinstance(body.get("result"),list):
+                summary["result_count"]=len(body["result"])
+                summary["result_first_keys"]=list(body["result"][0])[:20] if body["result"] and isinstance(body["result"][0],dict) else []
         if "result" in body and isinstance(body["result"],dict):
             summary["result_keys"]=list(body["result"])[:15]
             if current_label == "netease_user_search":
@@ -91,6 +96,21 @@ def summarize(data):
                 summary["user_song_exact_candidates"]=options[:5]
     if isinstance(body,list):
         summary["records"]=len(body)
+        if current_label == "lrcapi_json_user_song":
+            selection=[]
+            for item in body[:10]:
+                if not isinstance(item,dict):continue
+                t=item.get("title","")
+                artist=item.get("artist",item.get("artists",""))
+                names=",".join(v.get("name","") if isinstance(v,dict) else str(v) for v in artist) if isinstance(artist,list) else str(artist)
+                candidates=[]
+                for name in ("lyrics","lrc","lrc_ttml"):
+                    value=item.get(name,"")
+                    if isinstance(value,str) and timestamp.search(value):
+                        candidates.append(name)
+                selection.append({"title":str(t)[:80],"artist":names[:80],
+                    "lrc_fields":candidates,"metadata_keys":list(item)[:22]})
+            summary["candidates"]=selection
         if body and isinstance(body[0],dict) and "trackName" in body[0]:
             songkey= "越界" if "user_song" in current_label else "海阔天空" if "chinese" in current_label or "amll" in current_label or "lrclib" in current_label else ""
             artistkey= "ShameU" if "user_song" in current_label else "Beyond"
