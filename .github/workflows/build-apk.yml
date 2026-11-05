@@ -3,6 +3,9 @@ on:
   push:
     branches: [v61-reverse-video-qishui-car-metadata]
   workflow_dispatch:
+concurrency:
+  group: v61-release-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -238,8 +241,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create v61-reverse-video-qishui-car-metadata \
-            AADisplay-CarPlay-v61-debug.apk v61-sha256.txt tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh \
-            --target "$GITHUB_SHA" \
-            --title "AADisplay CarPlay v61 – Reverse Video and QiShui Car Music" \
-            --notes-file V61_TEST_PLAN.md
+          tag=v61-reverse-video-qishui-car-metadata
+          files=(AADisplay-CarPlay-v61-debug.apk v61-sha256.txt tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --target "$GITHUB_SHA" \
+              --title "AADisplay CarPlay v61 – Reverse Video and QiShui Car Music" \
+              --notes-file V61_TEST_PLAN.md
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            gh release create "$tag" "${files[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "AADisplay CarPlay v61 – Reverse Video and QiShui Car Music" \
+              --notes-file V61_TEST_PLAN.md
+          fi
