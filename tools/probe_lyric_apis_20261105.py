@@ -34,6 +34,8 @@ cases=[
  ("lrclib_user_song",param("https://lrclib.net/api/search",track_name="越界",artist_name="ShameU"),"https://lrclib.net/"),
  ("amll_user_song",param("https://api.amll.dev/v1/lrclib/search",track_name="越界",artist_name="ShameU"),"https://api.amll.dev/"),
  ("lrcapi_legacy",param("https://api.lrc.cx/lyrics",title=song,artist=singer),"https://api.lrc.cx/"),
+ ("lrcapi_user_song",param("https://api.lrc.cx/lyrics",title="越界",artist="ShameU"),"https://api.lrc.cx/"),
+ ("lrcapi_json_user_song",param("https://api.lrc.cx/jsonapi",title="越界",artist="ShameU"),"https://api.lrc.cx/"),
  ("netease_user_search",param("https://music.163.com/api/search/get/web",s="越界 ShameU",type=1,limit=10),"https://music.163.com/"),
 ]
 timestamp=re.compile(r'\[(?:\d{1,3}:\d{2}(?:[.:]\d{1,3})?|\d{3,9},\d{2,9})\]')
@@ -61,6 +63,9 @@ def summarize(data):
                 summary["router_parse_error"]=type(e).__name__
         summary["timestamp_sample_present"]=bool(timestamp.search(html))
         summary["is_empty"]=not html.strip()
+        if current_label.startswith("lrcapi_"):
+            summary["contains_lrc_time_tags"]=bool(timestamp.search(html))
+            summary["has_artist_header"]=bool(re.search(r"(?mi)^\[ar:[^]]{1,80}\]",html))
         return summary
     summary["type"]=type(body).__name__
     if isinstance(body,dict):
@@ -75,6 +80,15 @@ def summarize(data):
                 summary["lyric_keys"]=list(body["lyric"])[:20]
         if "result" in body and isinstance(body["result"],dict):
             summary["result_keys"]=list(body["result"])[:15]
+            if current_label == "netease_user_search":
+                songs=body["result"].get("songs",[]) or []
+                options=[]
+                for candidate in songs[:20]:
+                    artistlist=candidate.get("artists",[]) or []
+                    people=",".join(x.get("name","") for x in artistlist if isinstance(x,dict))
+                    if candidate.get("name","")=="越界" and "shameu" in people.lower():
+                        options.append({"id":candidate.get("id"),"durationMs":candidate.get("duration")})
+                summary["user_song_exact_candidates"]=options[:5]
     if isinstance(body,list):
         summary["records"]=len(body)
         if body and isinstance(body[0],dict) and "trackName" in body[0]:
