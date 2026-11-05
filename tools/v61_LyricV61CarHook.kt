@@ -5,6 +5,9 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
+import android.util.Size
 import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
@@ -27,6 +30,7 @@ object LyricV61CarHook : BaseHook() {
         var ctx: Context? = null
         var lastKey = ""
         var lastCover = ""
+        var lastArtUri = ""
         var lastState = -1
         var lastStateAt = 0L
         var lastSessionAt = 0L
@@ -81,6 +85,23 @@ object LyricV61CarHook : BaseHook() {
             }
         }
 
+        /** Media3/car players may expose only a content URI rather than Bitmap. */
+        fun coverUri(uriText: String, key: String) {
+            val c = ctx ?: return
+            val identity = key + "|" + uriText
+            if (uriText.isBlank() || identity == lastArtUri) return
+            lastArtUri = identity
+            thread(name = "v61-car-cover-uri", isDaemon = true) {
+                runCatching {
+                    val uri = Uri.parse(uriText)
+                    if (uri.scheme == "content" || uri.scheme == "android.resource") {
+                        val thumb = c.contentResolver.loadThumbnail(uri, Size(320, 320), null)
+                        cover(thumb, key)
+                    }
+                }.onFailure { Log.w(tagName, "v61 art URI unavailable", it) }
+            }
+        }
+
         fun publish(title: String, artist: String, id: String, image: Bitmap?, source: String) {
             val name = title.trim().take(160)
             if (name.isBlank()) return
@@ -132,9 +153,19 @@ object LyricV61CarHook : BaseHook() {
                                     ?: m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
                                     ?: m.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
                                 lastSessionAt = SystemClock.elapsedRealtime()
-                                publish(title, artist,
-                                    m.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) ?: "",
-                                    art, "session")
+                                val id = m.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) ?: ""
+                                publish(title, artist, id, art, "session")
+                                if (art == null) {
+                                    val artUri = m.getString(MediaMetadata.METADATA_KEY_ART_URI)
+                                        ?: m.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)
+                                        ?: m.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
+                                        ?: ""
+                                    val identity = id.trim().ifBlank {
+                                        "car:" + (title.trim().take(160) + "|" +
+                                            artist.trim().take(160)).hashCode()
+                                    }
+                                    coverUri(artUri, identity)
+                                }
                                 for (k in arrayOf("lyricInfo",
                                     "android.media.metadata.LYRIC", "lyrics")) {
                                     m.getText(k)?.toString()?.let { rawLyrics(it) }
@@ -164,7 +195,10 @@ object LyricV61CarHook : BaseHook() {
                                     ?.toString().orEmpty()
                                 val artist = extras.getCharSequence(Notification.EXTRA_TEXT)
                                     ?.toString().orEmpty()
-                                publish(title, artist, "", n.largeIcon, "notification")
+                                val image = n.largeIcon ?: runCatching {
+                                    (n.getLargeIcon()?.loadDrawable(ctx) as? BitmapDrawable)?.bitmap
+                                }.getOrNull()
+                                publish(title, artist, "", image, "notification")
                                 state(PlaybackState.STATE_PLAYING, 0L)
                             }
                         })
