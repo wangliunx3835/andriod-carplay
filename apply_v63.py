@@ -52,8 +52,8 @@ one(C+"CarPlayMediaOverlay.kt",
 
 g=Path("aa-display/build.gradle.kts")
 s=g.read_text(encoding="utf-8")
-if s.count("versionCode = 3162")!=1 or
-        s.count('versionName = "0.3#17.8-v62"')!=1:
+if (s.count("versionCode = 3162")!=1 or
+        s.count('versionName = "0.3#17.8-v62"')!=1):
  raise AssertionError("v63 exact v62 baseline required")
 g.write_text(s.replace("versionCode = 3162","versionCode = 3163")
     .replace('versionName = "0.3#17.8-v62"',
