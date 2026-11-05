@@ -12,4 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Probe public lyrics endpoints without logging lyric content
-        run: python3 tools/probe_lyric_apis_20261105.py
+        run: |
+          python3 tools/probe_qishui_h5_shape_20261105.py
+          python3 tools/probe_lyric_apis_20261105.py
