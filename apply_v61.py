@@ -87,91 +87,58 @@ one("java/io/github/nitsuya/aa/display/xposed/XposedInit.kt",
 '''            packageName == "com.luna.music.car" -> arrayOf(LyricV61CarHook)
             packageName in setOf("com.luna.music","com.tencent.qqmusic",''',
 "car package match")
-one("res/values/arrays.xml",
-'''        <item>com.luna.music</item>''',
-'''        <item>com.luna.music</item>
-        <item>com.luna.music.car</item>''',"LSPosed scope")
-
+# v54 ALREADY opted in com.luna.music.car, installed the provider UID
+# allowlist, and implemented a bounded art store. Reuse it rather than
+# introducing a second cover cache or duplicate LSPosed scope.
 p=R/"java/io/github/nitsuya/aa/display/xposed/hook/LyricV61CarHook.kt"
 if p.exists():raise AssertionError("v61 duplicate car source")
 p.write_text(Path("../tools/v61_LyricV61CarHook.kt").read_text(encoding="utf-8"),
  encoding="utf-8")
 
 one("java/io/github/nitsuya/aa/display/carplay/LyricV53Bridge.kt",
-'''  private val allowed=setOf("com.luna.music","com.tencent.qqmusic",''',
-'''  private val allowed=setOf("com.luna.music","com.luna.music.car",
-   "com.tencent.qqmusic",''',"bridge allowed packages")
+'''   val next:String,val playing:Boolean,val artworkRevision:Long)''',
+'''   val next:String,val playing:Boolean,val artworkRevision:Long,
+   val sourcePkg:String)''',"car source model")
 one("java/io/github/nitsuya/aa/display/carplay/LyricV53Bridge.kt",
-'''  data class Music(val song:String,val artist:String,val current:String,
-   val next:String,val playing:Boolean)''',
-'''  data class Music(val song:String,val artist:String,val current:String,
-   val next:String,val playing:Boolean,val pkg:String,val coverRev:Long)
-  fun readCarCover(c:Context):ByteArray? = runCatching {
-   c.openFileInput("v61_car_cover.jpg").use{it.readBytes()}
-  }.getOrNull()''',"bridge cover revision")
-one("java/io/github/nitsuya/aa/display/carplay/LyricV53Bridge.kt",
-'''    l?.first?:p.getString("line","").orEmpty(),l?.second.orEmpty(),playing)''',
-'''    l?.first?:p.getString("line","").orEmpty(),l?.second.orEmpty(),playing,
-    p.getString("pkg","").orEmpty(),p.getLong("coverRev",0L))''',"bridge read revision")
-one("java/io/github/nitsuya/aa/display/carplay/LyricV53Bridge.kt",
-'''    if(id.isNotBlank()&&id!=p.getString("id",""))e.remove("body").remove("line")''',
-'''    if(id.isNotBlank()&&id!=p.getString("id","")) {
-     e.remove("body").remove("line").putLong("coverRev",0L)
-    }''',"new song clears old art")
-one("java/io/github/nitsuya/aa/display/carplay/LyricV53Bridge.kt",
-'''   else -> return result
-  }
-  e.putString("pkg",pkg)''',
-'''   "cover" -> {
-    if(pkg!="com.luna.music.car")return result
-    val jpg=extras.getByteArray("jpeg")?:return result
-    if(jpg.size !in 100..260000)return result
-    val id=extras.getString("id").orEmpty()
-    if(id.isBlank() || id!=p.getString("id","").orEmpty())return result
-    runCatching {
-     c.openFileOutput("v61_car_cover.jpg",Context.MODE_PRIVATE).use{it.write(jpg)}
-     e.putLong("coverRev",SystemClock.elapsedRealtimeNanos())
-    }.onFailure{Log.w("AAD_V61Car","cover write failed",it)}
-   }
-   else -> return result
-  }
-  e.putString("pkg",pkg)''',"bounded jpg IPC")
+'''    playing,p.getLong("art_revision",0L))''',
+'''    playing,p.getLong("art_revision",0L),
+    p.getString("pkg","").orEmpty())''',"car source read")
 
-# Decode cover JPEG only on its version change, not every 650ms refresh;
-# keep existing cluster artwork and mobile QiShui behavior unchanged.
+# Car player state is more authoritative than an old Settings.Global ticker
+# left over by another music app.
 one("java/io/github/nitsuya/aa/display/carplay/CarPlayMediaOverlay.kt",
-'''    private var cachedArt: Bitmap? = null''',
-'''    private var cachedArt: Bitmap? = null
-    private var v61ArtRev = Long.MIN_VALUE
-    private var v61CarArt: Bitmap? = null''',"media cover fields")
-one("java/io/github/nitsuya/aa/display/carplay/CarPlayMediaOverlay.kt",
-'''        cachedArt = null
-        lastArtRevision = Long.MIN_VALUE''',
-'''        cachedArt = null
-        v61CarArt = null
-        v61ArtRev = Long.MIN_VALUE
-        lastArtRevision = Long.MIN_VALUE''',"media cover cleanup")
-one("java/io/github/nitsuya/aa/display/carplay/CarPlayMediaOverlay.kt",
-'''        if (observed!=null && observed.song.isNotBlank() &&
-            (observed.playing||rawTitle.isBlank())) {
-            media=Media(title=observed.song,artist=observed.artist,
-                current=observed.current,next=observed.next,
-                playing=observed.playing,art=cachedArt)''',
-'''        if (observed!=null && observed.song.isNotBlank() &&
-            (observed.playing||rawTitle.isBlank())) {
-            if(observed.pkg=="com.luna.music.car" && observed.coverRev!=v61ArtRev){
-                v61ArtRev=observed.coverRev
-                val jpg=if(observed.coverRev!=0L) LyricV53Bridge.readCarCover(c)
-                    else null
-                v61CarArt=if(jpg!=null)runCatching {
-                    BitmapFactory.decodeByteArray(jpg,0,jpg.size)
-                }.getOrNull() else null
-            }
-            media=Media(title=observed.song,artist=observed.artist,
-                current=observed.current,next=observed.next,
-                playing=observed.playing,
-                art=if(observed.pkg=="com.luna.music.car")
-                    v61CarArt ?: cachedArt else cachedArt)''',"overlay car cover")
+'''            (observed.playing||rawTitle.isBlank())) {''',
+'''            (observed.playing||rawTitle.isBlank()||
+                observed.sourcePkg=="com.luna.music.car")) {''',"car metadata priority")
+
+# Some music providers publish lyricInfo as {"lyric":"[00:...]"};
+# v53's parser only recognized a raw LRC string.
+one("java/io/github/nitsuya/aa/display/xposed/hook/LyricV53Hook.kt",
+'''import java.io.ByteArrayOutputStream''',
+'''import java.io.ByteArrayOutputStream
+import org.json.JSONObject''',"lyric json import")
+one("java/io/github/nitsuya/aa/display/xposed/hook/LyricV53Hook.kt",
+'''  fun accept(raw:String){
+   if(raw.length !in 12..64000 || !raw.contains('['))return
+   if(raw.hashCode()==lastBody)return
+   lastBody=raw.hashCode()
+   post("raw"){it.putString("body",raw)}
+  }''',
+'''  fun accept(raw:String){
+   val normalized=if(raw.trimStart().startsWith("{"))runCatching {
+    val j=JSONObject(raw)
+    j.optString("lyric").ifBlank{j.optString("rawLyric")}
+   }.getOrDefault("") else raw
+   if(normalized.length !in 12..64000 || !normalized.contains('['))return
+   if(normalized.hashCode()==lastBody)return
+   lastBody=normalized.hashCode()
+   post("raw"){it.putString("body",normalized)}
+  }''',"normalize lyricInfo")
+one("java/io/github/nitsuya/aa/display/xposed/hook/LyricV53Hook.kt",
+'''      for(key in arrayOf("android.media.metadata.LYRIC","lyricInfo")){''',
+'''      for(key in arrayOf("android.media.metadata.LYRIC","lyricInfo",
+       "android.media.metadata.LYRICS","lyrics","lrc")){''',
+"lyric metadata key coverage")
 
 g=Path("aa-display/build.gradle.kts")
 s=g.read_text(encoding="utf-8")
