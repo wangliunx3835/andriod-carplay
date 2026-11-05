@@ -31,6 +31,10 @@ cases=[
  ("amll_lrclib",param("https://api.amll.dev/v1/lrclib/search",track_name=song,artist_name=singer),"https://api.amll.dev/"),
  ("lrcmux_compat",param("https://api.lrcmux.dev/compat/lrclib/api/search",track_name=song,artist_name=singer),"https://api.lrcmux.dev/"),
  ("netease_lyric",param("https://music.163.com/api/song/lyric",id=186016,lv=1,tv=-1),"https://music.163.com/"),
+ ("lrclib_user_song",param("https://lrclib.net/api/search",track_name="越界",artist_name="ShameU"),"https://lrclib.net/"),
+ ("amll_user_song",param("https://api.amll.dev/v1/lrclib/search",track_name="越界",artist_name="ShameU"),"https://api.amll.dev/"),
+ ("lrcapi_legacy",param("https://api.lrc.cx/lyrics",title=song,artist=singer),"https://api.lrc.cx/"),
+ ("netease_user_search",param("https://music.163.com/api/search/get/web",s="越界 ShameU",type=1,limit=10),"https://music.163.com/"),
 ]
 timestamp=re.compile(r'\[(?:\d{1,3}:\d{2}(?:[.:]\d{1,3})?|\d{3,9},\d{2,9})\]')
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -44,6 +48,17 @@ def summarize(data):
         html=data.decode("utf-8","replace")
         summary["type"]="html-or-text"
         summary["router_data"]="_ROUTER_DATA" in html
+        if summary["router_data"]:
+            try:
+                marker=html.index("_ROUTER_DATA")
+                eq=html.index("=",marker)
+                begin=html.index("{",eq)
+                router=json.JSONDecoder().raw_decode(html[begin:])[0]
+                timeline=router.get("loaderData",{}).get("track_page",{}).get("audioWithLyricsOption",{}).get("lyrics",{})
+                summary["router_page_keys"]=list(router.get("loaderData",{}).keys())[:12]
+                summary["router_sentence_count"]=len(timeline.get("sentences",[]) or [])
+            except Exception as e:
+                summary["router_parse_error"]=type(e).__name__
         summary["timestamp_sample_present"]=bool(timestamp.search(html))
         summary["is_empty"]=not html.strip()
         return summary
@@ -54,8 +69,22 @@ def summarize(data):
             if k in body: summary[k]=str(body[k])[:130]
         if isinstance(body.get("seo_track"),dict):
             summary["seo_track_keys"]=list(body["seo_track"])[:15]
+        if "lyric" in body:
+            summary["lyric_type"]=type(body["lyric"]).__name__
+            if isinstance(body["lyric"],dict):
+                summary["lyric_keys"]=list(body["lyric"])[:20]
+        if "result" in body and isinstance(body["result"],dict):
+            summary["result_keys"]=list(body["result"])[:15]
     if isinstance(body,list):
         summary["records"]=len(body)
+        if body and isinstance(body[0],dict) and "trackName" in body[0]:
+            songkey= "越界" if "user_song" in current_label else "海阔天空" if "chinese" in current_label or "amll" in current_label or "lrclib" in current_label else ""
+            artistkey= "ShameU" if "user_song" in current_label else "Beyond"
+            if songkey:
+                normalize=lambda v:re.sub(r"[^\w\u4e00-\u9fff]","",str(v).lower())
+                same=[x for x in body if isinstance(x,dict) and normalize(x.get("trackName",""))==normalize(songkey) and normalize(artistkey) in normalize(x.get("artistName",""))]
+                summary["exact_song_artist_matches"]=len(same)
+                summary["exact_synced_matches"]=sum(bool(isinstance(x.get("syncedLyrics"),str) and timestamp.search(x["syncedLyrics"])) for x in same)
         if body and isinstance(body[0],dict):
             summary["record_keys"]=list(body[0])[:18]
     q=deque([(body,0)])
@@ -80,6 +109,7 @@ def summarize(data):
     return summary
 
 for label,url,referer in cases:
+    current_label=label
     req=urllib.request.Request(url,headers={
         "User-Agent":UA,
         "Accept":"application/json,text/html;q=0.9,*/*;q=0.8",
