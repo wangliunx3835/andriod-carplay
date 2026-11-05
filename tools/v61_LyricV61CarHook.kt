@@ -70,8 +70,8 @@ object LyricV61CarHook : BaseHook() {
                     scaled.compress(Bitmap.CompressFormat.JPEG, 76, output)
                     if (scaled !== image) scaled.recycle()
                     val bytes = output.toByteArray()
-                    if (bytes.size in 100..260000) {
-                        feed("cover") {
+                    if (bytes.size in 256..160000) {
+                        feed("art") {
                             it.putString("id", key)
                             it.putByteArray("jpeg", bytes)
                         }
