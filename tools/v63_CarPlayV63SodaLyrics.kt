@@ -42,7 +42,7 @@ internal object CarPlayV63SodaLyrics {
     private val lrcTimestamp = Regex("""(?m)^\[\d{1,3}:\d{2}[.:]\d{1,3}]""")
     private val normalizeSeparators = Regex("""[\p{P}\p{Z}\s]+""")
 
-    fun maybeFetch(context: Context, music: LyricV53Bridge.Music, enabled: Boolean) {
+    fun maybeFetch(context: Context, music: LyricV53Bridge.Companion.Music, enabled: Boolean) {
         if (!enabled || music.sourcePkg != PACKAGE || music.song.isBlank()) return
         val app = context.applicationContext
         val pref = app.getSharedPreferences(STORE, Context.MODE_PRIVATE)
