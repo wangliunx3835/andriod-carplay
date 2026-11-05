@@ -192,6 +192,9 @@ jobs:
       - name: Apply v61 reverse-video and QiShui car metadata repair
         working-directory: source
         run: python3 ../apply_v61.py
+      - name: Apply v61 low-overhead BT and lyric parsing
+        working-directory: source
+        run: python3 ../apply_v61_power.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
