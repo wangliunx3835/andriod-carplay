@@ -1,10 +1,10 @@
-name: Build AADisplay v64 Reverse Video and QiShui Car Media APK + Release
+name: Build AADisplay v65 Reverse Video and QiShui Car Media APK + Release
 on:
   push:
-    branches: [v64-qishui-lyric-dual-source]
+    branches: [v65-qishui-h5-trackid-lyrics]
   workflow_dispatch:
 concurrency:
-  group: v64-release-${{ github.ref }}
+  group: v65-release-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
@@ -207,6 +207,9 @@ jobs:
       - name: Apply v64 independent synced LRC catalog fallback
         working-directory: source
         run: python3 ../apply_v64.py
+      - name: Apply v65 QiShui car H5 song-ID and KRC repair
+        working-directory: source
+        run: python3 ../apply_v65.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -232,34 +235,34 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v64-debug-APK
+          name: AADisplay-CarPlay-v65-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v64 APK and checksum
+      - name: Verify v65 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v64-debug.apk
-          sha256sum AADisplay-CarPlay-v64-debug.apk | tee v64-sha256.txt
-          unzip -t AADisplay-CarPlay-v64-debug.apk | tail -n 2
-      - name: Publish v64 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v65-debug.apk
+          sha256sum AADisplay-CarPlay-v65-debug.apk | tee v65-sha256.txt
+          unzip -t AADisplay-CarPlay-v65-debug.apk | tail -n 2
+      - name: Publish v65 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag=v64-qishui-lyric-dual-source
-          files=(AADisplay-CarPlay-v64-debug.apk v64-sha256.txt tools/v64_lyric_diag.sh tools/v63_lyric_diag.sh tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
+          tag=v65-qishui-h5-trackid-lyrics
+          files=(AADisplay-CarPlay-v65-debug.apk v65-sha256.txt tools/v65_lyric_diag.sh tools/v64_lyric_diag.sh tools/v63_lyric_diag.sh tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release edit "$tag" --target "$GITHUB_SHA" \
-              --title "AADisplay CarPlay v64 – Dual-source QiShui Car Lyrics" \
-              --notes-file V64_TEST_PLAN.md
+              --title "AADisplay CarPlay v65 – QiShui H5 Song ID Karaoke Lyrics" \
+              --notes-file V65_TEST_PLAN.md
             gh release upload "$tag" "${files[@]}" --clobber
           else
             gh release create "$tag" "${files[@]}" \
               --target "$GITHUB_SHA" \
-              --title "AADisplay CarPlay v64 – Dual-source QiShui Car Lyrics" \
-              --notes-file V64_TEST_PLAN.md
+              --title "AADisplay CarPlay v65 – QiShui H5 Song ID Karaoke Lyrics" \
+              --notes-file V65_TEST_PLAN.md
           fi
