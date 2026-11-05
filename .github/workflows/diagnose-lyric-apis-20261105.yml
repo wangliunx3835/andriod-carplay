@@ -1,0 +1,15 @@
+name: One-time public lyric API availability verification 2026-11-05
+on:
+  push:
+    branches: [diagnose-lyrics-apis-20261105]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lyric-api-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe public lyrics endpoints without logging lyric content
+        run: python3 tools/probe_lyric_apis_20261105.py
