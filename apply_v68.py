@@ -15,6 +15,14 @@ edit(f,'        reply200(msg, replyBody)','''        reply200(msg, replyBody)
                 .onFailure { Log.w(CarPlayConsts.TAG,"v68 ownership callback failed",it) }
         }''')
 edit(f,'    private fun currentModesParams(): Map<String, Any?>','    fun currentModesParams(): Map<String, Any?>')
+# Defer UI recovery until its event response has been written.
+edit(f,'    private val closed = AtomicBoolean(false)',
+    '    private val closed = AtomicBoolean(false)\n    private var v68UiRequested = false')
+edit(f,'        reply200(msg, replyBody)\n        if (screenWasPhone',
+    '        reply200(msg, replyBody)\n        if (v68UiRequested) {\n            v68UiRequested = false\n            runCatching { onPhoneScreenRequested() }\n                .onFailure { Log.w(CarPlayConsts.TAG,"v68 UI callback failed",it) }\n        }\n        if (screenWasPhone')
+edit(f,'''                runCatching { onPhoneScreenRequested() }
+                    .onFailure { Log.w(CarPlayConsts.TAG, "v58 requestUI callback error", it) }''',
+    '                v68UiRequested = true')
 f='CarPlayRtspSession.kt'
 edit(f,'    private val v58ReopenScreen = AtomicReference<(() -> Boolean)?>(null)','''    private val v58ReopenScreen = AtomicReference<(() -> Boolean)?>(null)
     private val v68Epoch = AtomicLong(0L)
@@ -45,6 +53,8 @@ edit(f,'                onPhoneScreenRequested = {\n                    v58TryRe
                 onPhoneScreenRequested = {
                     if (v68Session) v68Action.get()?.invoke(false)
                     else v58TryRecovery("requestUI")''')
+edit(f,'                    thread(name = "carplay-modes-restored"','                    if (!v68Session) thread(name = "carplay-modes-restored"')
+edit(f,'                v59ArmReturnProbe("encoder-resume")','                if (!v68Enabled.get()) v59ArmReturnProbe("encoder-resume")')
 edit(f,'                        v58TryRecovery("MainScreen restored")','''                        if (v68Session) v68Action.get()?.invoke(false)
                         else v58TryRecovery("MainScreen restored")''')
 edit(f,'                if (reply?.firstLine?.contains("200") != true || port == null || port<=0) {','''                if (v68Session && !v68Live()) {
