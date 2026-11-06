@@ -1,10 +1,10 @@
-name: Build AADisplay v66 CarLetter Connection and Reverse Video
+name: Build AADisplay v67 Restore Stable Connection
 on:
   push:
-    branches: [v66-carletter-handoff-reverse]
+    branches: [v67-restore-stable-connection]
   workflow_dispatch:
 concurrency:
-  group: v66-release-${{ github.ref }}
+  group: v67-release-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
@@ -213,6 +213,9 @@ jobs:
       - name: Apply v66 connection and reverse recovery fixes
         working-directory: source
         run: python3 ../apply_v66.py
+      - name: Apply v67 restore v65 connection sequence
+        working-directory: source
+        run: python3 ../apply_v67.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -238,34 +241,34 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v66-debug-APK
+          name: AADisplay-CarPlay-v67-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v65 APK and checksum
+      - name: Verify v67 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v66-debug.apk
-          sha256sum AADisplay-CarPlay-v66-debug.apk | tee v66-sha256.txt
-          unzip -t AADisplay-CarPlay-v66-debug.apk | tail -n 2
-      - name: Publish v66 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v67-debug.apk
+          sha256sum AADisplay-CarPlay-v67-debug.apk | tee v67-sha256.txt
+          unzip -t AADisplay-CarPlay-v67-debug.apk | tail -n 2
+      - name: Publish v67 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag=v66-carletter-handoff-reverse
-          files=(AADisplay-CarPlay-v66-debug.apk v66-sha256.txt tools/v65_lyric_diag.sh tools/v64_lyric_diag.sh tools/v63_lyric_diag.sh tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
+          tag=v67-restore-stable-connection
+          files=(AADisplay-CarPlay-v67-debug.apk v67-sha256.txt tools/v65_lyric_diag.sh tools/v64_lyric_diag.sh tools/v63_lyric_diag.sh tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release edit "$tag" --target "$GITHUB_SHA" \
-              --title "AADisplay CarPlay v66 – CarLetter handoff and reverse recovery" \
-              --notes-file V66_TEST_PLAN.md
+              --title "AADisplay CarPlay v67 – Restore stable connection" \
+              --notes-file V67_TEST_PLAN.md
             gh release upload "$tag" "${files[@]}" --clobber
           else
             gh release create "$tag" "${files[@]}" --prerelease \
               --target "$GITHUB_SHA" \
-              --title "AADisplay CarPlay v66 – CarLetter handoff and reverse recovery" \
-              --notes-file V66_TEST_PLAN.md
+              --title "AADisplay CarPlay v67 – Restore stable connection" \
+              --notes-file V67_TEST_PLAN.md
           fi
