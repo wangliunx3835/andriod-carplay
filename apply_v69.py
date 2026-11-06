@@ -39,6 +39,16 @@ edit(f,'                if (clientSocket?.isConnected == true && sessionLive()) 
                     continue
                 }
                 if (clientSocket?.isConnected == true && sessionLive()) {''')
+# Recheck inside the existing ownership lock, including a peer arriving mid-dial.
+edit(f,'''    private fun attachPeer(socket: BluetoothSocket, inbound: Boolean, via: String = "dial") {
+        val generation = synchronized(writeLock) {''','''    private fun attachPeer(socket: BluetoothSocket, inbound: Boolean, via: String = "dial") {
+        val generation = synchronized(writeLock) {
+            if (SmartBoxV69DialPolicy.matches(socket.remoteDevice?.name) &&
+                (mediaActive() || (clientSocket?.isConnected == true && clientSocket !== socket))) {
+                Log.i(CarPlayConsts.TAG,"v69 SmartBox attach ignored: existing connection protected")
+                socket.closeQuietly()
+                return
+            }''')
 edit(f,'        rfcommArmed.set(false)\n        discoverableRequested.set(false)','        rfcommArmed.set(false)\n        v69Policy.clear()\n        v69Services.clear()\n        discoverableRequested.set(false)')
 edit('CarPlaySourceSession.kt','            sessionLive = { iap2?.isNegotiatingOrLive() == true },','''            sessionLive = { iap2?.isNegotiatingOrLive() == true },
             mediaActive = { rtsp?.isStreaming() == true || rtsp?.isAirPlaySourceActive() == true },''')
