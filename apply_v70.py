@@ -21,6 +21,17 @@ edit('carplay/CarPlayMediaSettingsUi.kt','        root.addView(panel)','        
 edit('carplay/CarPlayRtspSession.kt','    fun isStreaming(): Boolean = streaming.get()','''    var smartBoxPeer: () -> Boolean = { false }
     var smartBoxAudioBypass: () -> Boolean = { false }
     fun isStreaming(): Boolean = streaming.get()''')
+# SmartBox uses the existing complete event-iAP2 engine, passively armed only
+# after video startup. Native receiver branches retain their exact v69 behavior.
+edit('carplay/CarPlayRtspSession.kt','val wifi = if (mib3 || lsp != null) {','val wifi = if (mib3 || lsp != null || smartBoxPeer()) {')
+edit('carplay/CarPlayRtspSession.kt','                    mib3Style = mib3,','                    mib3Style = mib3 || smartBoxPeer(),')
+edit('carplay/CarPlayRtspSession.kt','        streaming.set(true)\n        if (!v34Enabled) {','        streaming.set(true)\n        if (smartBoxPeer()) wifiIap.get()?.armPassiveDetect()\n        if (!v34Enabled) {')
+edit('carplay/protocol/WifiIap2Link.kt','    fun announce() {','''    fun armPassiveDetect() {
+        if (!mib3Style || !running.get()) return
+        synchronized(lock) { detectArmed = true }
+    }
+
+    fun announce() {''')
 # Existing event iAP2 engine is retained; no new type-130 negotiation.
 edit('carplay/CarPlayRtspSession.kt','            Log.i(CarPlayConsts.TAG, "RECORD ok")','''            Log.i(CarPlayConsts.TAG, "RECORD ok")
             if (smartBoxPeer() && !phoneMac.isNullOrBlank()) {
