@@ -63,6 +63,10 @@ method='''    override fun smartBoxAudioRoute(box: String, target: String, conne
 
 '''
 edit('xposed/CoreManagerService.kt','    override fun isCarPlaySessionLive(): Boolean = carPlaySessionLive',method+'    override fun isCarPlaySessionLive(): Boolean = carPlaySessionLive')
+edit('xposed/CoreManagerService.kt','            forbidProfile(adapter, device, BluetoothProfile.A2DP, "a2dp")','''            if (!io.github.nitsuya.aa.display.xposed.carplay.SmartBoxV70SystemAudio.isAudioTarget(mac)) {
+                forbidProfile(adapter, device, BluetoothProfile.A2DP, "a2dp")
+            }''')
+
 edit('xposed/CoreManager.kt','    override fun setCarPlayAudioEgressEnabled(enabled: Boolean) {','''    override fun smartBoxAudioRoute(box: String, target: String, connect: Boolean): Boolean =
         runCatching { getService()?.smartBoxAudioRoute(box, target, connect) == true }
             .getOrDefault(false)
