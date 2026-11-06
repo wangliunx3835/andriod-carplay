@@ -41,6 +41,7 @@ edit('xposed/carplay/CarPlayAudioCapture.kt','    fun setEnabled(enabled: Boolea
         val enabled = requested && !SmartBoxV70SystemAudio.bypass()''')
 edit('xposed/carplay/CarPlayAudioCapture.kt','            desired.set(enabled)','            desired.set(requested)')
 edit('xposed/carplay/CarPlayAudioCapture.kt','    private fun enableLocked() {','    private fun enableLocked() {\n        if (SmartBoxV70SystemAudio.bypass()) return')
+edit('xposed/carplay/CarPlayAudioCapture.kt','if (!desired.get() && !armed.get()) {','if ((!desired.get() || SmartBoxV70SystemAudio.bypass()) && !armed.get()) {')
 method='''    override fun smartBoxAudioRoute(box: String, target: String, connect: Boolean): Boolean {
         val identity = android.os.Binder.clearCallingIdentity()
         return try {
