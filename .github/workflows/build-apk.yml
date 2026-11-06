@@ -1,10 +1,10 @@
-name: Build AADisplay v68 Screen Lifecycle Tests and APK
+name: Build AADisplay v69 SmartBox Transport Tests and APK
 on:
   push:
-    branches: [v68-screen-lifecycle]
+    branches: [v69-smartbox-transport]
   workflow_dispatch:
 concurrency:
-  group: v68-release-${{ github.ref }}
+  group: v69-release-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
@@ -219,6 +219,9 @@ jobs:
       - name: Apply v68 CarLetter screen lifecycle
         working-directory: source
         run: python3 ../apply_v68.py
+      - name: Apply v69 SmartBox transport adaptation
+        working-directory: source
+        run: python3 ../apply_v69.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -244,34 +247,34 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AADisplay-CarPlay-v68-debug-APK
+          name: AADisplay-CarPlay-v69-debug-APK
           path: |
             source/aa-display/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Verify v68 APK and checksum
+      - name: Verify v69 APK and checksum
         run: |
           set -euo pipefail
           apk=$(find source/aa-display/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -type f -print -quit)
           test -n "$apk"
-          cp "$apk" AADisplay-CarPlay-v68-debug.apk
-          sha256sum AADisplay-CarPlay-v68-debug.apk | tee v68-sha256.txt
-          unzip -t AADisplay-CarPlay-v68-debug.apk | tail -n 2
-      - name: Publish v68 to GitHub Releases
+          cp "$apk" AADisplay-CarPlay-v69-debug.apk
+          sha256sum AADisplay-CarPlay-v69-debug.apk | tee v69-sha256.txt
+          unzip -t AADisplay-CarPlay-v69-debug.apk | tail -n 2
+      - name: Publish v69 to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag=v68-screen-lifecycle
-          files=(AADisplay-CarPlay-v68-debug.apk v68-sha256.txt tools/v65_lyric_diag.sh tools/v64_lyric_diag.sh tools/v63_lyric_diag.sh tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
+          tag=v69-smartbox-transport
+          files=(AADisplay-CarPlay-v69-debug.apk v69-sha256.txt tools/v65_lyric_diag.sh tools/v64_lyric_diag.sh tools/v63_lyric_diag.sh tools/v61_qishui_diag.sh tools/v49_capture.sh tools/v50_reverse_capture.sh tools/v51_state_capture.sh)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release edit "$tag" --target "$GITHUB_SHA" \
-              --title "AADisplay CarPlay v68 – Screen lifecycle test build" \
-              --notes-file V68_TEST_PLAN.md
+              --title "AADisplay CarPlay v69 – SmartBox transport test build" \
+              --notes-file V69_TEST_PLAN.md
             gh release upload "$tag" "${files[@]}" --clobber
           else
             gh release create "$tag" "${files[@]}" --prerelease \
               --target "$GITHUB_SHA" \
-              --title "AADisplay CarPlay v68 – Screen lifecycle test build" \
-              --notes-file V68_TEST_PLAN.md
+              --title "AADisplay CarPlay v69 – SmartBox transport test build" \
+              --notes-file V69_TEST_PLAN.md
           fi
