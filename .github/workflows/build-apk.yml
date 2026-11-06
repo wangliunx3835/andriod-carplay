@@ -1,7 +1,7 @@
 name: Build AADisplay v70 SmartBox Dual Bluetooth Tests and APK
 on:
   push:
-    branches: [v70-smartbox-transport]
+    branches: [v70-smartbox-dual-bluetooth]
   workflow_dispatch:
 concurrency:
   group: v70-release-${{ github.ref }}
@@ -219,9 +219,9 @@ jobs:
       - name: Apply v68 CarLetter screen lifecycle
         working-directory: source
         run: python3 ../apply_v68.py
-      - name: Apply v70 SmartBox transport adaptation
+      - name: Apply v69 SmartBox transport adaptation
         working-directory: source
-        run: python3 ../apply_v70.py
+        run: python3 ../apply_v69.py
       - name: Apply v70 SmartBox dual Bluetooth
         working-directory: source
         run: python3 ../apply_v70.py
